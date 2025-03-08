@@ -9,14 +9,7 @@ exports.whitelist = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:3002",
-    "https://www.setapat.com.ng",
-    "https://www.setapat.com",
-    "https://app.setapat.com",
-    "https://admin.setapat.com",
-    "https://designer.setapat.com",
-    "https://supervisor.setapat.com",
-    "https://biller.setapat.app",
-    "https://setapat.vercel.app"
+    "https://leads-reseller-crm.vercel.app",
 ];
 exports.SIX_MONTHS = 1000 * 60 * 60 * 24 * 30 * 6;
 exports.MB = 1024 * 1024;
