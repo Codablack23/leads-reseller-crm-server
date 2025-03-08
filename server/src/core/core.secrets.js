@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.APP_NAME = exports.DB_DIALECT = exports.MYSQL_DB_PASSWORD = exports.MYSQL_DB_USER = exports.MYSQL_DB_PORT = exports.MYSQL_DB_HOST = exports.MYSQL_DB = exports.PORT = exports.APP_ENV = exports.SECRET_KEY = exports.MONGODB_URI = void 0;
+const dotenv_1 = require("dotenv");
+(0, dotenv_1.config)();
+exports.MONGODB_URI = process.env.MONGODB_URI;
+exports.SECRET_KEY = process.env.SECRET_KEY;
+exports.APP_ENV = process.env.APP_ENV;
+exports.PORT = process.env.PORT;
+exports.MYSQL_DB = process.env.MYSQL_DB;
+exports.MYSQL_DB_HOST = process.env.MYSQL_DB_HOST;
+exports.MYSQL_DB_PORT = process.env.MYSQL_DB_PORT;
+exports.MYSQL_DB_USER = process.env.MYSQL_DB_USER;
+exports.MYSQL_DB_PASSWORD = process.env.MYSQL_DB_PASSWORD;
+exports.DB_DIALECT = process.env.DB_DIALECT;
+exports.APP_NAME = process.env.APP_NAME;
