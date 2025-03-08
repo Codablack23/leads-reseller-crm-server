@@ -1,0 +1,8 @@
+API TESTING REPORT
+    -AUTH ENDPOINTS
+    [GET]- /auth ✅✅✅
+    [GET]- /auth/login ✅✅✅
+    [GET]- /auth/register ✅✅✅
+    [GET]- /auth/logout ✅✅✅
+    [PATCH]- /users/profile ✅✅✅
+    [POST]- /vendors ✅✅✅
