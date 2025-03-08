@@ -6,7 +6,7 @@ export const whitelist = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:3002",
-    "http://leads-reseller-crm.vercel.app",
+    "https://leads-reseller-crm.vercel.app",
 ]
 
 export const SIX_MONTHS = 1000 * 60 * 60 * 24 * 30 * 6
