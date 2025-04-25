@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { AffiliateEntity } from "./affiliate.entity";
-import { BrandEntity } from "./brand..entity";
+import { BrandEntity } from "./brand.entity";
 
 @Entity({ name: "api_keys" })
 export class APIKeyEntity {

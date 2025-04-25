@@ -1,6 +1,6 @@
 import { AffiliateEntity } from "@common/entities/affiliate.entity";
 import { APIKeyEntity } from "@common/entities/apiKey.entity";
-import { BrandEntity } from "@common/entities/brand..entity";
+import { BrandEntity } from "@common/entities/brand.entity";
 import { AppDataSource } from "@core/core.db";
 import { body, param, ValidationChain } from "express-validator";
 

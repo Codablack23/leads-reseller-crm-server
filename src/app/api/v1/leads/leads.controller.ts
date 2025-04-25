@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
-import { ApiService } from "./service";
+import {LeadsAPIService} from "./leads.service";
 import AppResponse from "@common/services/service.response";
 
-class APIController{
-    constructor(private apiService: ApiService) {}
+class LeadsAPIController{
+    constructor(private leadApiService: LeadsAPIService) {}
     getLeads:RequestHandler = async(req,res,next)=>{
         try {
             const apiKey = req.query.apiKey
-            const leads = await this.apiService.getUserLeads(apiKey as string)
+            const leads = await this.leadApiService.getUserLeads(apiKey as string)
             AppResponse.sendOkResponse(res,{leads},"Leads fetched successfully")
         } catch (error) {
             next(error)
@@ -16,7 +16,7 @@ class APIController{
     addLead:RequestHandler = async(req,res,next)=>{
         const apiKey = req.query.apiKey as string
         try {
-            const lead = await this.apiService.addLead(apiKey,req.body)
+            const lead = await this.leadApiService.addLead(apiKey,req.body)
             AppResponse.sendOkResponse(res, {lead},"Lead added successfull")
         } catch (error) {
             next(error)
@@ -27,4 +27,4 @@ class APIController{
     }
 }
 
-export default new APIController(new ApiService()) as APIController;
+export default new LeadsAPIController(new LeadsAPIService()) as LeadsAPIController;

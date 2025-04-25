@@ -13,3 +13,5 @@ export const MYSQL_DB_USER = process.env.MYSQL_DB_USER
 export const MYSQL_DB_PASSWORD = process.env.MYSQL_DB_PASSWORD
 export const DB_DIALECT = process.env.DB_DIALECT
 export const APP_NAME = process.env.APP_NAME
+export const AFFILIATE_DEFAULT_PASSWORD = process.env.AFFILIATE_DEFAULT_PASSWORD
+export const BRAND_DEFAULT_PASSWORD = process.env.BRAND_DEFAULT_PASSWORD

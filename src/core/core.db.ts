@@ -1,7 +1,8 @@
 import { AffiliateEntity } from "@common/entities/affiliate.entity";
 import { APIKeyEntity } from "@common/entities/apiKey.entity";
-import { BrandEntity } from "@common/entities/brand..entity";
+import { BrandEntity } from "@common/entities/brand.entity";
 import { LeadEntity } from "@common/entities/lead.entity";
+import { TrafficEntity } from "@common/entities/traffic.entity";
 import { UserEntity } from "@common/entities/user.entity";
 
 import {
@@ -49,7 +50,14 @@ export const AppDataSource = new DataSource({
     username: MYSQL_DB_USER,
     password: MYSQL_DB_PASSWORD,
     database: MYSQL_DB,
-    entities:  [UserEntity,AffiliateEntity,APIKeyEntity,BrandEntity,LeadEntity],
+    entities:  [
+        UserEntity,
+        AffiliateEntity,
+        APIKeyEntity,
+        BrandEntity,
+        LeadEntity,
+        TrafficEntity
+    ],
     synchronize: true,
     logging: false,
 })

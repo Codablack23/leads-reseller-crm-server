@@ -1,41 +1,31 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { APIKeyEntity } from "./apiKey.entity";
-import { LeadEntity } from "./lead.entity";
+import { UserEntity } from "./user.entity";
+import { TrafficEntity } from "./traffic.entity";
 
-@Entity({name: "affiliates"})
-export class AffiliateEntity{
+@Entity({ name: "affiliates" })
+export class AffiliateEntity {
 
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @Column("longtext",{unique: true})
+    @Column("longtext", { unique: true })
     affiliateId: string;
 
-    @Column("text",{nullable: true})
-    name:string;
+    @Column("text", { nullable: true })
+    name: string;
 
-    @Column("text")
-    country:string;
+    @Column("text", { nullable: true })
+    email: string;
 
-    @Column("text",)
-    openingTime:string;
+    @OneToMany(() => APIKeyEntity, (apiKey) => apiKey.affiliate)
+    apiKey: APIKeyEntity;
 
-    @Column("text")
-    closingTime:string;
+    @OneToMany(() => TrafficEntity, (traffic) => traffic.affiliate, { nullable: true })
+    traffic: TrafficEntity;
 
-    @Column("text")
-    trafficDays:string;
-
-    @Column("text",{default:"ACTIVE"})
-    status:string;
-
-    @Column("text",{nullable:true})
-    email:string;
-
-    @OneToMany(()=>APIKeyEntity,(apiKey)=>apiKey.affiliate)
-    apiKey:APIKeyEntity;
-
-    @OneToMany(()=>LeadEntity,(lead)=>lead.affiliate)
-    lead:LeadEntity;
+    @OneToOne(() => UserEntity, (user) => user.affiliate, { nullable: true })
+    @JoinColumn()
+    user: UserEntity;
 }
 

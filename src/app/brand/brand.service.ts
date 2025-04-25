@@ -1,10 +1,13 @@
-import { BrandEntity } from "@common/entities/brand..entity"
+import { BrandEntity } from "@common/entities/brand.entity"
 import { AppDataSource } from "@core/core.db"
 import { NotFoundError } from "@core/core.error"
 import { BrandRequestData, BrandUpdateRequestData, Data } from "./brand.type"
+import { AuthService } from "@app/auth/auth.service"
+import { BRAND_DEFAULT_PASSWORD } from "@core/core.secrets"
 
 export class BrandService {
     private brandRepository = AppDataSource.getRepository(BrandEntity)
+    private authService = new AuthService()
     async getBrands() {
         const brands = await this.brandRepository.find()
         return brands
@@ -18,13 +21,21 @@ export class BrandService {
 
     }
     async addBrand(brandData: BrandRequestData) {
-        const affiliateInstance = this.brandRepository.create({
+        const brandInstance = this.brandRepository.create({
             ...brandData,
         })
-        const newAffiliate = await this.brandRepository.save(affiliateInstance)
+        const newBrand = await this.brandRepository.save(brandInstance)
+        const user  = await this.authService.registerUser({
+            name: `${newBrand.name}`,
+            password: `${BRAND_DEFAULT_PASSWORD}`,
+            email: `${newBrand.email}`
+        },{
+            brand: newBrand,
+        })
         return {
             ...brandData,
-            id: newAffiliate.id
+            ...user,
+            id: newBrand.id
         }
     }
 

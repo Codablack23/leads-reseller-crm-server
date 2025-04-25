@@ -1,11 +1,13 @@
 import { BadRequest, UnAuthorizedError } from "@core/core.error";
-import { LoginRequest, SignUpRequest } from "./auth.types";
+import { LoginRequest, RegistrationRelation, SignUpRequest } from "./auth.types";
 import { Request } from "express";
 import { AppDataSource } from "@core/core.db";
 import bcrypt from "bcrypt";
 import {  UserSessionData } from "@interfaces/index";
 import { v4 } from "uuid";
 import { UserEntity } from "@common/entities/user.entity";
+import { AffiliateEntity } from "@common/entities/affiliate.entity";
+import { BrandEntity } from "@common/entities/brand.entity";
 
 
 
@@ -38,14 +40,18 @@ export class AuthService{
             userId:user?.id,
         } as UserSessionData
     }
-    async registerUser(signUpRequest:SignUpRequest){
-        const password = await bcrypt.hash(signUpRequest.password,await bcrypt.genSalt())
-        const userId = v4()
+
+
+
+    async registerUser(signUpRequest:SignUpRequest,registrationRelation?:RegistrationRelation){
+
+        const password = await bcrypt.hash(signUpRequest.password,await bcrypt.genSalt()) as string
 
         const newUser =  this.userRepository.create({
-            id:userId,
             ...signUpRequest,
             password,
+            affiliate:registrationRelation?.affiliate,
+            brand:registrationRelation?.brand,
         })
 
         await this.userRepository.save(newUser)
@@ -54,7 +60,7 @@ export class AuthService{
             email:signUpRequest.email,
             last_signed_in: (new Date()).toISOString(),
             name:signUpRequest.name,
-            userId,
+            userId:newUser.id,
         } as UserSessionData
     }
 }

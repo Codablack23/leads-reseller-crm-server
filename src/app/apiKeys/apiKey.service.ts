@@ -4,7 +4,7 @@ import { APIKeyEntity } from "@common/entities/apiKey.entity";
 import {DateTime} from "luxon";
 import { AffiliateEntity } from "@common/entities/affiliate.entity";
 import { NotFoundError } from "@core/core.error";
-import { BrandEntity } from "@common/entities/brand..entity";
+import { BrandEntity } from "@common/entities/brand.entity";
 
 
 export class APIKeyService{
