@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.APIKeyEntity = void 0;
 const typeorm_1 = require("typeorm");
 const affiliate_entity_1 = require("./affiliate.entity");
-const brand__entity_1 = require("./brand..entity");
+const brand_entity_1 = require("./brand.entity");
 let APIKeyEntity = class APIKeyEntity {
 };
 exports.APIKeyEntity = APIKeyEntity;
@@ -29,8 +29,8 @@ __decorate([
     __metadata("design:type", affiliate_entity_1.AffiliateEntity)
 ], APIKeyEntity.prototype, "affiliate", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => brand__entity_1.BrandEntity, (brand) => brand.apiKey, { onDelete: "CASCADE" }),
-    __metadata("design:type", brand__entity_1.BrandEntity)
+    (0, typeorm_1.ManyToOne)(() => brand_entity_1.BrandEntity, (brand) => brand.apiKey, { onDelete: "CASCADE" }),
+    __metadata("design:type", brand_entity_1.BrandEntity)
 ], APIKeyEntity.prototype, "brand", void 0);
 __decorate([
     (0, typeorm_1.Column)("date"),

@@ -10,12 +10,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrandService = void 0;
-const brand__entity_1 = require("../../common/entities/brand..entity");
+const brand_entity_1 = require("../../common/entities/brand.entity");
 const core_db_1 = require("../../core/core.db");
 const core_error_1 = require("../../core/core.error");
+const auth_service_1 = require("../auth/auth.service");
+const core_secrets_1 = require("../../core/core.secrets");
 class BrandService {
     constructor() {
-        this.brandRepository = core_db_1.AppDataSource.getRepository(brand__entity_1.BrandEntity);
+        this.brandRepository = core_db_1.AppDataSource.getRepository(brand_entity_1.BrandEntity);
+        this.authService = new auth_service_1.AuthService();
     }
     getBrands() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -35,9 +38,16 @@ class BrandService {
     }
     addBrand(brandData) {
         return __awaiter(this, void 0, void 0, function* () {
-            const affiliateInstance = this.brandRepository.create(Object.assign({}, brandData));
-            const newAffiliate = yield this.brandRepository.save(affiliateInstance);
-            return Object.assign(Object.assign({}, brandData), { id: newAffiliate.id });
+            const brandInstance = this.brandRepository.create(Object.assign({}, brandData));
+            const newBrand = yield this.brandRepository.save(brandInstance);
+            const user = yield this.authService.registerUser({
+                name: `${newBrand.name}`,
+                password: `${core_secrets_1.BRAND_DEFAULT_PASSWORD}`,
+                email: `${newBrand.email}`
+            }, {
+                brand: newBrand,
+            });
+            return Object.assign(Object.assign(Object.assign({}, brandData), user), { id: newBrand.id });
         });
     }
     deleteBrand(id) {

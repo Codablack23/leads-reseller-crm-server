@@ -13,11 +13,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.APIKeyValidator = void 0;
 const affiliate_entity_1 = require("../../common/entities/affiliate.entity");
 const apiKey_entity_1 = require("../../common/entities/apiKey.entity");
-const brand__entity_1 = require("../../common/entities/brand..entity");
+const brand_entity_1 = require("../../common/entities/brand.entity");
 const core_db_1 = require("../../core/core.db");
 const express_validator_1 = require("express-validator");
 const affiliateRepository = core_db_1.AppDataSource.getRepository(affiliate_entity_1.AffiliateEntity);
-const brandRepository = core_db_1.AppDataSource.getRepository(brand__entity_1.BrandEntity);
+const brandRepository = core_db_1.AppDataSource.getRepository(brand_entity_1.BrandEntity);
 const apiKeyRepository = core_db_1.AppDataSource.getRepository(apiKey_entity_1.APIKeyEntity);
 class APIKeyValidator {
 }

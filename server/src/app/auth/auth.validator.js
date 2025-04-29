@@ -64,3 +64,59 @@ AuthValidator.registerSchema = [
         .notEmpty().withMessage("Please provide your password")
         .isLength({ min: 8 }).withMessage("please provide a password with atleast 8 characters long")
 ];
+AuthValidator.registerBrandSchema = [
+    (0, express_validator_1.body)("email")
+        .notEmpty().withMessage("Please provide an email")
+        .isEmail().withMessage("Please provide a valid email")
+        .custom((email) => __awaiter(void 0, void 0, void 0, function* () {
+        const existingUser = yield userRepository.findOne({ where: { email } });
+        if (existingUser) {
+            throw new Error('E-mail already in use');
+        }
+    })),
+    (0, express_validator_1.body)("name")
+        .notEmpty().withMessage("Please provide your name")
+        .isLength({ min: 3 }).withMessage("Name should be atleast 3 characters long")
+        .custom((value) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!value)
+            throw new Error("Please provide your name");
+        const names = value.split(" ");
+        if (names.length == 1) {
+            throw new Error("Please provide your full name eg Surname Firstname Othernames(optional");
+        }
+        if (!names.every(name => name.length >= 3)) {
+            throw new Error("Each name should atleast be 3 characters long");
+        }
+        if (!names.every(name => name.match(/([a-zA-Z])/g))) {
+            throw new Error("Each name should be an alphabet");
+        }
+    })),
+];
+AuthValidator.registerAffiliateSchema = [
+    (0, express_validator_1.body)("email")
+        .notEmpty().withMessage("Please provide an email")
+        .isEmail().withMessage("Please provide a valid email")
+        .custom((email) => __awaiter(void 0, void 0, void 0, function* () {
+        const existingUser = yield userRepository.findOne({ where: { email } });
+        if (existingUser) {
+            throw new Error('E-mail already in use');
+        }
+    })),
+    (0, express_validator_1.body)("name")
+        .notEmpty().withMessage("Please provide your name")
+        .isLength({ min: 3 }).withMessage("Name should be atleast 3 characters long")
+        .custom((value) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!value)
+            throw new Error("Please provide your name");
+        const names = value.split(" ");
+        if (names.length == 1) {
+            throw new Error("Please provide your full name eg Surname Firstname Othernames(optional");
+        }
+        if (!names.every(name => name.length >= 3)) {
+            throw new Error("Each name should atleast be 3 characters long");
+        }
+        if (!names.every(name => name.match(/([a-zA-Z])/g))) {
+            throw new Error("Each name should be an alphabet");
+        }
+    }))
+];

@@ -16,12 +16,12 @@ const apiKey_entity_1 = require("../../common/entities/apiKey.entity");
 const luxon_1 = require("luxon");
 const affiliate_entity_1 = require("../../common/entities/affiliate.entity");
 const core_error_1 = require("../../core/core.error");
-const brand__entity_1 = require("../../common/entities/brand..entity");
+const brand_entity_1 = require("../../common/entities/brand.entity");
 class APIKeyService {
     constructor() {
         this.apiKeyRepository = core_db_1.AppDataSource.getRepository(apiKey_entity_1.APIKeyEntity);
         this.affiliateRepository = core_db_1.AppDataSource.getRepository(affiliate_entity_1.AffiliateEntity);
-        this.brandRepository = core_db_1.AppDataSource.getRepository(brand__entity_1.BrandEntity);
+        this.brandRepository = core_db_1.AppDataSource.getRepository(brand_entity_1.BrandEntity);
     }
     getKeys() {
         return __awaiter(this, void 0, void 0, function* () {

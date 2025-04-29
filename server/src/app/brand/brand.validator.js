@@ -11,10 +11,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrandValidator = void 0;
-const brand__entity_1 = require("../../common/entities/brand..entity");
+const brand_entity_1 = require("../../common/entities/brand.entity");
 const core_db_1 = require("../../core/core.db");
 const express_validator_1 = require("express-validator");
-const brandRepository = core_db_1.AppDataSource.getRepository(brand__entity_1.BrandEntity);
+const brandRepository = core_db_1.AppDataSource.getRepository(brand_entity_1.BrandEntity);
 class BrandValidator {
 }
 exports.BrandValidator = BrandValidator;
@@ -24,14 +24,6 @@ BrandValidator.createBrandSchema = [
         .isEmail().withMessage("Please provide a valid email"),
     (0, express_validator_1.body)("name").escape()
         .notEmpty().withMessage("Please provide an brand name"),
-    (0, express_validator_1.body)("country")
-        .notEmpty().withMessage("Please provide a country for your brand"),
-    (0, express_validator_1.body)("openingTime")
-        .notEmpty().withMessage("Please provide a starting time for your traffic"),
-    (0, express_validator_1.body)("closingTime")
-        .notEmpty().withMessage("Please provide a closing time for traffic"),
-    (0, express_validator_1.body)("trafficDays")
-        .notEmpty().withMessage("Please provide traffic days for your brand")
 ];
 BrandValidator.updateBrandSchema = [
     (0, express_validator_1.param)("id").custom((id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -42,14 +34,6 @@ BrandValidator.updateBrandSchema = [
     })),
     (0, express_validator_1.body)("name").optional().escape()
         .notEmpty().withMessage("Please provide an brand name"),
-    (0, express_validator_1.body)("country").optional()
-        .notEmpty().withMessage("Please provide a country for your brand"),
-    (0, express_validator_1.body)("openingTime").optional()
-        .notEmpty().withMessage("Please provide a starting time for your traffic"),
-    (0, express_validator_1.body)("closingTime").optional()
-        .notEmpty().withMessage("Please provide a closing time for traffic"),
-    (0, express_validator_1.body)("trafficDays").optional()
-        .notEmpty().withMessage("Please provide traffic days for your brand"),
     (0, express_validator_1.body)("email").optional().escape()
         .isEmail().withMessage("Please provide a valid email"),
 ];

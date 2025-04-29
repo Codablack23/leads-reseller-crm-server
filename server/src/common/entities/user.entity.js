@@ -11,6 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
+const affiliate_entity_1 = require("./affiliate.entity");
+const brand_entity_1 = require("./brand.entity");
 let UserEntity = class UserEntity {
 };
 exports.UserEntity = UserEntity;
@@ -30,6 +32,20 @@ __decorate([
     (0, typeorm_1.Column)({ type: "text" }),
     __metadata("design:type", String)
 ], UserEntity.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "text", default: "SUPERUSER" }),
+    __metadata("design:type", String)
+], UserEntity.prototype, "userType", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(type => affiliate_entity_1.AffiliateEntity, (affiliate) => affiliate.user, { onDelete: "CASCADE" }),
+    (0, typeorm_1.JoinColumn)(),
+    __metadata("design:type", affiliate_entity_1.AffiliateEntity)
+], UserEntity.prototype, "affiliate", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(type => brand_entity_1.BrandEntity, (brand) => brand.user, { onDelete: "CASCADE" }),
+    (0, typeorm_1.JoinColumn)(),
+    __metadata("design:type", brand_entity_1.BrandEntity)
+], UserEntity.prototype, "brand", void 0);
 exports.UserEntity = UserEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "users" })
 ], UserEntity);

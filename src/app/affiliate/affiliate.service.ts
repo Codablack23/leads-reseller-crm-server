@@ -25,10 +25,13 @@ export class AffiliateService {
     }
     async getAffiliatesTraffic(affiliateId:string) {
         const affiliates = await this.trafficRepository.find({
-            where: { 
+            where: {
                 affiliate:{
                     id:affiliateId
                 }
+             },
+             relations:{
+                affiliate:true
              }
         })
         return affiliates

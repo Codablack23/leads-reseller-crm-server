@@ -11,8 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadEntity = void 0;
 const typeorm_1 = require("typeorm");
-const affiliate_entity_1 = require("./affiliate.entity");
-const brand__entity_1 = require("./brand..entity");
+const traffic_entity_1 = require("./traffic.entity");
 let LeadEntity = class LeadEntity {
 };
 exports.LeadEntity = LeadEntity;
@@ -57,13 +56,9 @@ __decorate([
     __metadata("design:type", String)
 ], LeadEntity.prototype, "receiver_status", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => affiliate_entity_1.AffiliateEntity, (affiliate) => affiliate.lead, { onDelete: "CASCADE" }),
-    __metadata("design:type", affiliate_entity_1.AffiliateEntity)
-], LeadEntity.prototype, "affiliate", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => brand__entity_1.BrandEntity, (brand) => brand.lead, { onDelete: "CASCADE" }),
-    __metadata("design:type", brand__entity_1.BrandEntity)
-], LeadEntity.prototype, "brand", void 0);
+    (0, typeorm_1.ManyToOne)(() => traffic_entity_1.TrafficEntity, (traffic) => traffic.lead),
+    __metadata("design:type", traffic_entity_1.TrafficEntity)
+], LeadEntity.prototype, "traffic", void 0);
 exports.LeadEntity = LeadEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "leads" })
 ], LeadEntity);

@@ -16,7 +16,6 @@ exports.AuthService = void 0;
 const core_error_1 = require("../../core/core.error");
 const core_db_1 = require("../../core/core.db");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const uuid_1 = require("uuid");
 const user_entity_1 = require("../../common/entities/user.entity");
 class AuthService {
     constructor() {
@@ -50,17 +49,16 @@ class AuthService {
             };
         });
     }
-    registerUser(signUpRequest) {
+    registerUser(signUpRequest, registrationRelation) {
         return __awaiter(this, void 0, void 0, function* () {
             const password = yield bcrypt_1.default.hash(signUpRequest.password, yield bcrypt_1.default.genSalt());
-            const userId = (0, uuid_1.v4)();
-            const newUser = this.userRepository.create(Object.assign(Object.assign({ id: userId }, signUpRequest), { password }));
+            const newUser = this.userRepository.create(Object.assign(Object.assign({}, signUpRequest), { password, affiliate: registrationRelation === null || registrationRelation === void 0 ? void 0 : registrationRelation.affiliate, brand: registrationRelation === null || registrationRelation === void 0 ? void 0 : registrationRelation.brand }));
             yield this.userRepository.save(newUser);
             return {
                 email: signUpRequest.email,
                 last_signed_in: (new Date()).toISOString(),
                 name: signUpRequest.name,
-                userId,
+                userId: newUser.id,
             };
         });
     }

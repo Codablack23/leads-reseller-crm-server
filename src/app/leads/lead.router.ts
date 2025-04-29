@@ -1,0 +1,16 @@
+import { Router } from "express";
+import LeadController from "./lead.controller";
+import useValidation from "@common/middlewares/middleware.validate";
+// import { LeadValidator } from "./lead.validator";
+
+const leadsRouter = Router()
+leadsRouter.get("/",LeadController.getLeads)
+leadsRouter.get("/:id",LeadController.getLead)
+leadsRouter.post("/",LeadController.addLead)
+leadsRouter.patch("/:id",LeadController.updateLead)
+leadsRouter.delete("/:id",LeadController.deleteLead)
+
+export default {
+    routeGroup: "/leads",
+    routeHandler: leadsRouter,
+}

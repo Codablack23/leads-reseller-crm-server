@@ -45,6 +45,33 @@ class AffiliateController {
                 next(error);
             }
         });
+        this.addAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const traffic = yield this.affiliateService.addAffliateTraffic(req.params.id, req.body);
+                service_response_1.default.sendOkResponse(res, { traffic }, "affiliate added successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+        this.getAllAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const traffic = yield this.affiliateService.getAffiliatesTraffic(req.params.id);
+                service_response_1.default.sendOkResponse(res, { traffic }, "affiliate added successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+        this.getAffiliateTrafficDetails = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const traffic = yield this.affiliateService.getAffiliateTrafficDetails(req.params.id);
+                service_response_1.default.sendOkResponse(res, { traffic }, "affiliate added successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
         this.updateAffiliate = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const updateData = req.body;
@@ -56,10 +83,31 @@ class AffiliateController {
                 next(error);
             }
         });
+        this.updateAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const updateData = req.body;
+            try {
+                const affiliate = yield this.affiliateService.updateAffiliateTraffic(id, updateData);
+                service_response_1.default.sendOkResponse(res, { affiliate }, `affiliate updated successfully`);
+            }
+            catch (error) {
+                next(error);
+            }
+        });
         this.deleteAffiliate = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             try {
                 const affiliate = yield this.affiliateService.deleteAffiliate(id);
+                service_response_1.default.sendOkResponse(res, { affiliate }, `affiliate deleted successfully`);
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+        this.deleteAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            try {
+                const affiliate = yield this.affiliateService.deleteAffiliateTraffic(id);
                 service_response_1.default.sendOkResponse(res, { affiliate }, `affiliate deleted successfully`);
             }
             catch (error) {

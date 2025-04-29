@@ -16,8 +16,9 @@ exports.AppDataSource = exports.sequelize = void 0;
 exports.default = getDatabase;
 const affiliate_entity_1 = require("../common/entities/affiliate.entity");
 const apiKey_entity_1 = require("../common/entities/apiKey.entity");
-const brand__entity_1 = require("../common/entities/brand..entity");
+const brand_entity_1 = require("../common/entities/brand.entity");
 const lead_entity_1 = require("../common/entities/lead.entity");
+const traffic_entity_1 = require("../common/entities/traffic.entity");
 const user_entity_1 = require("../common/entities/user.entity");
 const core_secrets_1 = require("./core.secrets");
 const mysql2_1 = require("drizzle-orm/mysql2");
@@ -50,7 +51,14 @@ exports.AppDataSource = new typeorm_1.DataSource({
     username: core_secrets_1.MYSQL_DB_USER,
     password: core_secrets_1.MYSQL_DB_PASSWORD,
     database: core_secrets_1.MYSQL_DB,
-    entities: [user_entity_1.UserEntity, affiliate_entity_1.AffiliateEntity, apiKey_entity_1.APIKeyEntity, brand__entity_1.BrandEntity, lead_entity_1.LeadEntity],
+    entities: [
+        user_entity_1.UserEntity,
+        affiliate_entity_1.AffiliateEntity,
+        apiKey_entity_1.APIKeyEntity,
+        brand_entity_1.BrandEntity,
+        lead_entity_1.LeadEntity,
+        traffic_entity_1.TrafficEntity
+    ],
     synchronize: true,
     logging: false,
 });
