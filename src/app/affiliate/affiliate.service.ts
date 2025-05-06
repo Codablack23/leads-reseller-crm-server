@@ -14,7 +14,11 @@ export class AffiliateService {
     private apiKeyService = new APIKeyService()
 
     async getAffiliates() {
-        const affiliates = await this.affiliateRepository.find()
+        const affiliates = await this.affiliateRepository.find({
+            relations:{
+                traffic:true
+            }
+        })
         return affiliates
     }
 
