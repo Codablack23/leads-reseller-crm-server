@@ -1,4 +1,6 @@
 export const whitelist = [
+    "http://localhost:5501",
+    "http://localhost:5502",
     "http://localhost:5503",
     "http://localhost:5505",
     "http://localhost:3006",

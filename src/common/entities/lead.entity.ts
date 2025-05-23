@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { TrafficEntity } from "./traffic.entity";
 
 @Entity({ name: "leads" })
@@ -33,8 +33,23 @@ export class LeadEntity {
 
     @Column("text", { default: "PENDING", })
     receiver_status: string;
+    
+    @Column("text", { default: "PENDING", })
+    call_status: string;
+    
+    @Column("text", { default: "PENDING",nullable:true })
+    ftd_status: string;
+    
+    @Column("boolean", { default: false })
+    is_ftd: boolean;
 
-    @ManyToOne(() => TrafficEntity, (traffic) => traffic.lead)
+    @ManyToOne(() => TrafficEntity, (traffic) => traffic.lead, { cascade: false, onDelete: 'NO ACTION' })
     traffic: TrafficEntity;
+
+    @CreateDateColumn()
+    createdAt: Date;  // Automatically set when record is inserted
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 }
 

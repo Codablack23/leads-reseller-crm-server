@@ -5,5 +5,5 @@ export interface LeadRequestData{
     phone?:string;
     source?:string;
     campaign?:string;
-    country?:string;
+    country:string;
 }

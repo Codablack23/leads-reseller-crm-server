@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { APIKeyEntity } from "./apiKey.entity";
 import { UserEntity } from "./user.entity";
 import { TrafficEntity } from "./traffic.entity";
@@ -27,5 +27,11 @@ export class AffiliateEntity {
     @OneToOne(() => UserEntity, (user) => user.affiliate, { nullable: true })
     @JoinColumn()
     user: UserEntity;
+
+    @CreateDateColumn()
+    createdAt: Date;  // Automatically set when record is inserted
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 }
 

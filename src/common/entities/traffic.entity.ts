@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Timestamp, UpdateDateColumn } from "typeorm";
 import { LeadEntity } from "./lead.entity";
 import { BrandEntity } from "./brand.entity";
 import { AffiliateEntity } from "./affiliate.entity";
@@ -24,22 +24,38 @@ export class TrafficEntity {
     @Column("text", { nullable: true })
     country: string;
 
-    @Column("text", { nullable: true })
+    @Column("time")
     openingTime: string;
 
-    @Column("text", { nullable: true })
+    @Column("time")
     closingTime: string;
 
     @Column("text", { nullable: true })
     trafficDays: string;
 
-    @OneToMany(() => LeadEntity, (lead) => lead.traffic)
-    lead: LeadEntity;
+    @OneToMany(() => LeadEntity, (lead) => lead.traffic, {
+        cascade: false,
+        onDelete: 'NO ACTION'
+    })
+    lead: LeadEntity[];
 
-    @ManyToOne(() => BrandEntity, (brand) => brand.traffic)
+    @ManyToOne(() => BrandEntity, (brand) => brand.traffic, {
+        onDelete: 'SET NULL',
+        nullable: true,
+    })
     brand: BrandEntity;
 
-    @ManyToOne(() => AffiliateEntity, (affiliate) => affiliate.traffic)
+    @ManyToOne(() => AffiliateEntity, (affiliate) => affiliate.traffic, {
+        onDelete: 'SET NULL',
+        nullable: true,
+    })
     affiliate: AffiliateEntity;
+
+    @CreateDateColumn()
+    createdAt: Date;  // Automatically set when record is inserted
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
 }
 

@@ -9,11 +9,11 @@ export class ApivValidations{
         .notEmpty().withMessage("Please provide an firstname"),
         body("lastname").escape()
         .notEmpty().withMessage("Please provide lead lastname"),
-        body("country").optional()
+        body("country").escape()
         .notEmpty().withMessage("Please provide a country for your lead"),
-        body("phone").optional()
+        body("phone")
         .notEmpty().withMessage("Please provide a lead phone number"),
-        body("phone").optional()
+        body("campaign").optional()
         .notEmpty().withMessage("Please provide a campaign"),
     ]
 }

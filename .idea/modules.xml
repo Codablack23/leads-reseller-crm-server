@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../leads-reseller-crm/.idea/leads-reseller-crm.iml" filepath="$PROJECT_DIR$/../leads-reseller-crm/.idea/leads-reseller-crm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/leads-reseller-crm-server.iml" filepath="$PROJECT_DIR$/.idea/leads-reseller-crm-server.iml" />
+    </modules>
+  </component>
+</project>

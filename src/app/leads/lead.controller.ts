@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { LeadService } from "./lead.service";
+import { QueryProvider } from "@common/providers";
 
 class LeadController {
   constructor(private leadService: LeadService) {}
@@ -10,10 +11,12 @@ class LeadController {
    */
   getLeads: RequestHandler = async (req, res, next) => {
     try {
-      const leads = await this.leadService.getLeads();
+      const ftdQuery = QueryProvider.useFtdQuery(req)
+      const paginatedQuery = QueryProvider.usePagination(req)
+      const data = await this.leadService.getLeads(ftdQuery,paginatedQuery);
       res.status(200).json({
         status: "success",
-        data: { leads },
+        data,
       });
     } catch (err) {
       next(err);

@@ -6,8 +6,8 @@ import useValidation from "@common/middlewares/middleware.validate";
 const leadsRouter = Router()
 leadsRouter.get("/",LeadController.getLeads)
 leadsRouter.get("/:id",LeadController.getLead)
-leadsRouter.post("/",LeadController.addLead)
 leadsRouter.patch("/:id",LeadController.updateLead)
+leadsRouter.patch("/:id/ftd",LeadController.updateLead)
 leadsRouter.delete("/:id",LeadController.deleteLead)
 
 export default {

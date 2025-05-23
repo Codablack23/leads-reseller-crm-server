@@ -17,7 +17,7 @@ class LeadsAPIController{
         const apiKey = req.query.apiKey as string
         try {
             const lead = await this.leadApiService.addLead(apiKey,req.body)
-            AppResponse.sendOkResponse(res, {lead},"Lead added successfull")
+            AppResponse.sendOkResponse(res, {lead},"Lead added successfully")
         } catch (error) {
             next(error)
         }

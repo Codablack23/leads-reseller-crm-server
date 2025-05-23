@@ -1,9 +1,10 @@
-import { AffiliateEntity } from "@common/entities/affiliate.entity";
-import { APIKeyEntity } from "@common/entities/apiKey.entity";
-import { BrandEntity } from "@common/entities/brand.entity";
-import { LeadEntity } from "@common/entities/lead.entity";
-import { TrafficEntity } from "@common/entities/traffic.entity";
-import { UserEntity } from "@common/entities/user.entity";
+import { StatusMapEntity } from "@common/entities/statusMap.entity";
+import { AffiliateEntity } from "../common/entities/affiliate.entity";
+import { APIKeyEntity } from "../common/entities/apiKey.entity";
+import { BrandEntity } from "../common/entities/brand.entity";
+import { LeadEntity } from "../common/entities/lead.entity";
+import { TrafficEntity } from "../common/entities/traffic.entity";
+import { UserEntity } from "../common/entities/user.entity";
 
 import {
     MYSQL_DB,
@@ -11,7 +12,7 @@ import {
     MYSQL_DB_PASSWORD,
     MYSQL_DB_PORT,
     MYSQL_DB_USER
-} from "@core/core.secrets"
+} from "./core.secrets"
 
 import { drizzle } from "drizzle-orm/mysql2"
 import mysql from "mysql2/promise";
@@ -56,6 +57,7 @@ export const AppDataSource = new DataSource({
         APIKeyEntity,
         BrandEntity,
         LeadEntity,
+        StatusMapEntity,
         TrafficEntity
     ],
     synchronize: true,
