@@ -38,36 +38,36 @@ export class LeadService {
     ]);
 
     // Create maps for quick lookup
-    const groupMapByType = (type: StatusMapType) => {
-      return new Map(
-        statusMap
-          .filter(item => item.status_type === type)
-          .map(item => [item.from_status.toLowerCase(), item])
-      );
-    };
+    // const groupMapByType = (type: StatusMapType) => {
+    //   return new Map(
+    //     statusMap
+    //       .filter(item => item.status_type === type)
+    //       .map(item => [item.from_status.toLowerCase(), item])
+    //   );
+    // };
 
-    const callStatusMap = groupMapByType(StatusMapType.CALL);
-    const ftdStatusMap = groupMapByType(StatusMapType.FTD);
-    const mainStatusMap = groupMapByType(StatusMapType.STATUS);
+    // const callStatusMap = groupMapByType(StatusMapType.CALL);
+    // const ftdStatusMap = groupMapByType(StatusMapType.FTD);
+    // const mainStatusMap = groupMapByType(StatusMapType.STATUS);
 
     // Transform leads
     const leads = leadsRes.map((lead: ExtendedObject<LeadEntity>) => {
-      const callStatus = callStatusMap.get(lead.call_status.toLowerCase());
-      const ftdStatus = ftdStatusMap.get(lead.call_status.toLowerCase());
-      const status = mainStatusMap.get(lead.call_status.toLowerCase());
+      // const callStatus = callStatusMap.get(lead.call_status.toLowerCase());
+      // const ftdStatus = ftdStatusMap.get(lead.call_status.toLowerCase());
+      // const status = mainStatusMap.get(lead.call_status.toLowerCase());
 
-      if (callStatus) {
-        lead.original_call_status = lead.call_status
-        lead.call_status = callStatus.from_status
-      };
-      if (lead.is_ftd && ftdStatus) {
-        lead.original_ftd_status = lead.ftd_status
-        lead.ftd_status = ftdStatus.from_status
-      };
-      if (status) {
-        lead.original_status = lead.status
-        lead.status = status.from_status
-      };
+      // if (callStatus) {
+      //   lead.original_call_status = lead.call_status
+      //   lead.call_status = callStatus.from_status
+      // };
+      // if (lead.is_ftd && ftdStatus) {
+      //   lead.original_ftd_status = lead.ftd_status
+      //   lead.ftd_status = ftdStatus.from_status
+      // };
+      // if (status) {
+      //   lead.original_status = lead.status
+      //   lead.status = status.from_status
+      // };
 
       return lead;
     });
@@ -99,40 +99,8 @@ export class LeadService {
     // Fetch all status maps
     const statusMap = await this.statusMapRepository.find();
 
-    // Create maps for lookup
-    const callStatusMap = new Map(
-      statusMap
-        .filter(item => item.status_type === StatusMapType.CALL)
-        .map(item => [item.from_status.toLowerCase(), item])
-    );
-    const ftdStatusMap = new Map(
-      statusMap
-        .filter(item => item.status_type === StatusMapType.FTD)
-        .map(item => [item.from_status.toLowerCase(), item])
-    );
-    const mainStatusMap = new Map(
-      statusMap
-        .filter(item => item.status_type === StatusMapType.STATUS)
-        .map(item => [item.from_status.toLowerCase(), item])
-    );
 
-    // Normalize statuses
-    const callStatus = callStatusMap.get(lead.call_status.toLowerCase());
-    const ftdStatus = ftdStatusMap.get(lead.call_status.toLowerCase());
-    const status = mainStatusMap.get(lead.call_status.toLowerCase());
-
-    if (callStatus) {
-      lead.original_call_status = lead.call_status
-      lead.call_status = callStatus.from_status
-    };
-    if (lead.is_ftd && ftdStatus) {
-      lead.original_ftd_status = lead.ftd_status
-      lead.ftd_status = ftdStatus.from_status
-    };
-    if (status) {
-      lead.original_status = lead.status
-      lead.status = status.from_status
-    };
+  
     return lead;
   }
 

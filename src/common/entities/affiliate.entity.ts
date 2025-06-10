@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, Prim
 import { APIKeyEntity } from "./apiKey.entity";
 import { UserEntity } from "./user.entity";
 import { TrafficEntity } from "./traffic.entity";
+import { StatusMapEntity } from "./statusMap.entity";
 
 @Entity({ name: "affiliates" })
 export class AffiliateEntity {
@@ -19,10 +20,13 @@ export class AffiliateEntity {
     email: string;
 
     @OneToMany(() => APIKeyEntity, (apiKey) => apiKey.affiliate)
-    apiKey: APIKeyEntity;
+    apiKey: APIKeyEntity[];
 
     @OneToMany(() => TrafficEntity, (traffic) => traffic.affiliate, { nullable: true })
-    traffic: TrafficEntity;
+    traffic: TrafficEntity[];
+    
+    @OneToMany(() => StatusMapEntity, (statusMap) => statusMap.affiliate, { nullable: true })
+    statusMap?: StatusMapEntity[];
 
     @OneToOne(() => UserEntity, (user) => user.affiliate, { nullable: true })
     @JoinColumn()

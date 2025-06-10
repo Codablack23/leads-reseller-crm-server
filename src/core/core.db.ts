@@ -18,6 +18,7 @@ import { drizzle } from "drizzle-orm/mysql2"
 import mysql from "mysql2/promise";
 import { Sequelize } from "sequelize";
 import { DataSource } from "typeorm";
+import { StatusListEntity } from "@common/entities/statusList.entity";
 
 export default async function getDatabase(){
     const port = MYSQL_DB_PORT ? parseInt(MYSQL_DB_PORT) : 55263
@@ -55,6 +56,7 @@ export const AppDataSource = new DataSource({
         UserEntity,
         AffiliateEntity,
         APIKeyEntity,
+        StatusListEntity,
         BrandEntity,
         LeadEntity,
         StatusMapEntity,

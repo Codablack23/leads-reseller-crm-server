@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { TrafficEntity } from "./traffic.entity";
+import { StatusMapEntity } from "./statusMap.entity";
 
 @Entity({ name: "leads" })
 export class LeadEntity {
@@ -40,11 +41,20 @@ export class LeadEntity {
     @Column("text", { default: "PENDING",nullable:true })
     ftd_status: string;
     
+    @Column("date", { nullable:true })
+    ftd_date?: string; 
+    
+    @Column("longtext", { nullable:true })
+    ftd_description?: string;
+    
     @Column("boolean", { default: false })
     is_ftd: boolean;
 
     @ManyToOne(() => TrafficEntity, (traffic) => traffic.lead, { cascade: false, onDelete: 'NO ACTION' })
     traffic: TrafficEntity;
+
+    @OneToMany(() => StatusMapEntity, (statusMap) => statusMap.lead, { cascade: false, onDelete: 'NO ACTION' })
+    statusMap: StatusMapEntity[];
 
     @CreateDateColumn()
     createdAt: Date;  // Automatically set when record is inserted

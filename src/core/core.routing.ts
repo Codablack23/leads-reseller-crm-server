@@ -5,6 +5,7 @@ import authRouter from '@app/auth/auth.router'
 import brandRouter from '@app/brand/brand.router'
 import leadRouter from '@app/leads/lead.router'
 import statusRouter from '@app/status/status.router'
+import trafficRouter from '@app/traffic/traffic.router'
 import {Router} from 'express'
 
 
@@ -17,6 +18,7 @@ appRouter.use(apiKeyRouter.routeGroup,apiKeyRouter.routeHandler)
 appRouter.use(leadRouter.routeGroup,leadRouter.routeHandler)
 appRouter.use(leadRouter.routeGroup,leadRouter.routeHandler)
 appRouter.use(statusRouter.routeGroup,statusRouter.routeHandler)
+appRouter.use(trafficRouter.routeGroup,trafficRouter.routeHandler)
 
 
 export default appRouter
