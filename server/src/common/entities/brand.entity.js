@@ -42,6 +42,14 @@ __decorate([
     (0, typeorm_1.JoinColumn)(),
     __metadata("design:type", user_entity_1.UserEntity)
 ], BrandEntity.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], BrandEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], BrandEntity.prototype, "updatedAt", void 0);
 exports.BrandEntity = BrandEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "brands" })
 ], BrandEntity);

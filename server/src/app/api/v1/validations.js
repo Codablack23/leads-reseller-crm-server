@@ -12,10 +12,10 @@ ApivValidations.addLeadValidation = [
         .notEmpty().withMessage("Please provide an firstname"),
     (0, express_validator_1.body)("lastname").escape()
         .notEmpty().withMessage("Please provide lead lastname"),
-    (0, express_validator_1.body)("country").optional()
+    (0, express_validator_1.body)("country").escape()
         .notEmpty().withMessage("Please provide a country for your lead"),
-    (0, express_validator_1.body)("phone").optional()
+    (0, express_validator_1.body)("phone")
         .notEmpty().withMessage("Please provide a lead phone number"),
-    (0, express_validator_1.body)("phone").optional()
+    (0, express_validator_1.body)("campaign").optional()
         .notEmpty().withMessage("Please provide a campaign"),
 ];

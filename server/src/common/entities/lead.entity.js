@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadEntity = void 0;
 const typeorm_1 = require("typeorm");
 const traffic_entity_1 = require("./traffic.entity");
+const statusMap_entity_1 = require("./statusMap.entity");
 let LeadEntity = class LeadEntity {
 };
 exports.LeadEntity = LeadEntity;
@@ -56,9 +57,41 @@ __decorate([
     __metadata("design:type", String)
 ], LeadEntity.prototype, "receiver_status", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => traffic_entity_1.TrafficEntity, (traffic) => traffic.lead),
+    (0, typeorm_1.Column)("text", { default: "PENDING", }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "call_status", void 0);
+__decorate([
+    (0, typeorm_1.Column)("text", { default: "PENDING", nullable: true }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "ftd_status", void 0);
+__decorate([
+    (0, typeorm_1.Column)("date", { nullable: true }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "ftd_date", void 0);
+__decorate([
+    (0, typeorm_1.Column)("longtext", { nullable: true }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "ftd_description", void 0);
+__decorate([
+    (0, typeorm_1.Column)("boolean", { default: false }),
+    __metadata("design:type", Boolean)
+], LeadEntity.prototype, "is_ftd", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => traffic_entity_1.TrafficEntity, (traffic) => traffic.lead, { cascade: false, onDelete: 'NO ACTION' }),
     __metadata("design:type", traffic_entity_1.TrafficEntity)
 ], LeadEntity.prototype, "traffic", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => statusMap_entity_1.StatusMapEntity, (statusMap) => statusMap.lead, { cascade: false, onDelete: 'NO ACTION' }),
+    __metadata("design:type", Array)
+], LeadEntity.prototype, "statusMap", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], LeadEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], LeadEntity.prototype, "updatedAt", void 0);
 exports.LeadEntity = LeadEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "leads" })
 ], LeadEntity);

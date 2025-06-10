@@ -36,6 +36,14 @@ __decorate([
     (0, typeorm_1.Column)("date"),
     __metadata("design:type", Date)
 ], APIKeyEntity.prototype, "expiresAt", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], APIKeyEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], APIKeyEntity.prototype, "updatedAt", void 0);
 exports.APIKeyEntity = APIKeyEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "api_keys" })
 ], APIKeyEntity);

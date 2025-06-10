@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const apiKey_entity_1 = require("./apiKey.entity");
 const user_entity_1 = require("./user.entity");
 const traffic_entity_1 = require("./traffic.entity");
+const statusMap_entity_1 = require("./statusMap.entity");
 let AffiliateEntity = class AffiliateEntity {
 };
 exports.AffiliateEntity = AffiliateEntity;
@@ -35,17 +36,29 @@ __decorate([
 ], AffiliateEntity.prototype, "email", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => apiKey_entity_1.APIKeyEntity, (apiKey) => apiKey.affiliate),
-    __metadata("design:type", apiKey_entity_1.APIKeyEntity)
+    __metadata("design:type", Array)
 ], AffiliateEntity.prototype, "apiKey", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => traffic_entity_1.TrafficEntity, (traffic) => traffic.affiliate, { nullable: true }),
-    __metadata("design:type", traffic_entity_1.TrafficEntity)
+    __metadata("design:type", Array)
 ], AffiliateEntity.prototype, "traffic", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => statusMap_entity_1.StatusMapEntity, (statusMap) => statusMap.affiliate, { nullable: true }),
+    __metadata("design:type", Array)
+], AffiliateEntity.prototype, "statusMap", void 0);
 __decorate([
     (0, typeorm_1.OneToOne)(() => user_entity_1.UserEntity, (user) => user.affiliate, { nullable: true }),
     (0, typeorm_1.JoinColumn)(),
     __metadata("design:type", user_entity_1.UserEntity)
 ], AffiliateEntity.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], AffiliateEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], AffiliateEntity.prototype, "updatedAt", void 0);
 exports.AffiliateEntity = AffiliateEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "affiliates" })
 ], AffiliateEntity);

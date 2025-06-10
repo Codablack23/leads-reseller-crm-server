@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppDataSource = exports.sequelize = void 0;
 exports.default = getDatabase;
+const statusMap_entity_1 = require("../common/entities/statusMap.entity");
 const affiliate_entity_1 = require("../common/entities/affiliate.entity");
 const apiKey_entity_1 = require("../common/entities/apiKey.entity");
 const brand_entity_1 = require("../common/entities/brand.entity");
@@ -25,6 +26,7 @@ const mysql2_1 = require("drizzle-orm/mysql2");
 const promise_1 = __importDefault(require("mysql2/promise"));
 const sequelize_1 = require("sequelize");
 const typeorm_1 = require("typeorm");
+const statusList_entity_1 = require("../common/entities/statusList.entity");
 function getDatabase() {
     return __awaiter(this, void 0, void 0, function* () {
         const port = core_secrets_1.MYSQL_DB_PORT ? parseInt(core_secrets_1.MYSQL_DB_PORT) : 55263;
@@ -55,8 +57,10 @@ exports.AppDataSource = new typeorm_1.DataSource({
         user_entity_1.UserEntity,
         affiliate_entity_1.AffiliateEntity,
         apiKey_entity_1.APIKeyEntity,
+        statusList_entity_1.StatusListEntity,
         brand_entity_1.BrandEntity,
         lead_entity_1.LeadEntity,
+        statusMap_entity_1.StatusMapEntity,
         traffic_entity_1.TrafficEntity
     ],
     synchronize: true,

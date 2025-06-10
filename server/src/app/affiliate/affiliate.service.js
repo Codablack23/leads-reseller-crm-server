@@ -26,7 +26,11 @@ class AffiliateService {
     }
     getAffiliates() {
         return __awaiter(this, void 0, void 0, function* () {
-            const affiliates = yield this.affiliateRepository.find();
+            const affiliates = yield this.affiliateRepository.find({
+                relations: {
+                    traffic: true
+                }
+            });
             return affiliates;
         });
     }

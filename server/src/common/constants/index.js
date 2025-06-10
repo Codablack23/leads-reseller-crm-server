@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DAYS_OF_THE_WEEK = exports.MB = exports.SIX_MONTHS = exports.whitelist = void 0;
 exports.whitelist = [
+    "http://localhost:5501",
+    "http://localhost:5502",
     "http://localhost:5503",
     "http://localhost:5505",
     "http://localhost:3006",

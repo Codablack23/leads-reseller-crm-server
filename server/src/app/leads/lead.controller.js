@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const lead_service_1 = require("./lead.service");
+const providers_1 = require("../../common/providers");
 class LeadController {
     constructor(leadService) {
         this.leadService = leadService;
@@ -19,10 +20,12 @@ class LeadController {
          */
         this.getLeads = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const leads = yield this.leadService.getLeads();
+                const ftdQuery = providers_1.QueryProvider.useFtdQuery(req);
+                const paginatedQuery = providers_1.QueryProvider.usePagination(req);
+                const data = yield this.leadService.getLeads(ftdQuery, paginatedQuery);
                 res.status(200).json({
                     status: "success",
-                    data: { leads },
+                    data,
                 });
             }
             catch (err) {

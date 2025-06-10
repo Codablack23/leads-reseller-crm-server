@@ -42,11 +42,11 @@ __decorate([
     __metadata("design:type", String)
 ], TrafficEntity.prototype, "country", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { nullable: true }),
+    (0, typeorm_1.Column)("time"),
     __metadata("design:type", String)
 ], TrafficEntity.prototype, "openingTime", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { nullable: true }),
+    (0, typeorm_1.Column)("time"),
     __metadata("design:type", String)
 ], TrafficEntity.prototype, "closingTime", void 0);
 __decorate([
@@ -54,17 +54,34 @@ __decorate([
     __metadata("design:type", String)
 ], TrafficEntity.prototype, "trafficDays", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => lead_entity_1.LeadEntity, (lead) => lead.traffic),
-    __metadata("design:type", lead_entity_1.LeadEntity)
+    (0, typeorm_1.OneToMany)(() => lead_entity_1.LeadEntity, (lead) => lead.traffic, {
+        cascade: false,
+        onDelete: 'NO ACTION'
+    }),
+    __metadata("design:type", Array)
 ], TrafficEntity.prototype, "lead", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => brand_entity_1.BrandEntity, (brand) => brand.traffic),
+    (0, typeorm_1.ManyToOne)(() => brand_entity_1.BrandEntity, (brand) => brand.traffic, {
+        onDelete: 'SET NULL',
+        nullable: true,
+    }),
     __metadata("design:type", brand_entity_1.BrandEntity)
 ], TrafficEntity.prototype, "brand", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => affiliate_entity_1.AffiliateEntity, (affiliate) => affiliate.traffic),
+    (0, typeorm_1.ManyToOne)(() => affiliate_entity_1.AffiliateEntity, (affiliate) => affiliate.traffic, {
+        onDelete: 'SET NULL',
+        nullable: true,
+    }),
     __metadata("design:type", affiliate_entity_1.AffiliateEntity)
 ], TrafficEntity.prototype, "affiliate", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], TrafficEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], TrafficEntity.prototype, "updatedAt", void 0);
 exports.TrafficEntity = TrafficEntity = __decorate([
     (0, typeorm_1.Entity)({ name: "traffic" })
 ], TrafficEntity);
