@@ -3,6 +3,7 @@ import { APIKeyEntity } from "./apiKey.entity";
 import { UserEntity } from "./user.entity";
 import { TrafficEntity } from "./traffic.entity";
 import { StatusMapEntity } from "./statusMap.entity";
+import { LeadEntity } from "./lead.entity";
 
 @Entity({ name: "affiliates" })
 export class AffiliateEntity {
@@ -24,7 +25,10 @@ export class AffiliateEntity {
 
     @OneToMany(() => TrafficEntity, (traffic) => traffic.affiliate, { nullable: true })
     traffic: TrafficEntity[];
-    
+
+    @OneToMany(() => LeadEntity, (lead) => lead.affiliate, { nullable: true })
+    lead: LeadEntity[];
+
     @OneToMany(() => StatusMapEntity, (statusMap) => statusMap.affiliate, { nullable: true })
     statusMap?: StatusMapEntity[];
 

@@ -5,6 +5,7 @@ import useValidation from "@common/middlewares/middleware.validate";
 
 const leadsRouter = Router()
 leadsRouter.get("/",LeadController.getLeads)
+leadsRouter.get("/statistics",LeadController.getLeadStats)
 leadsRouter.get("/:id",LeadController.getLead)
 leadsRouter.patch("/:id",LeadController.updateLead)
 leadsRouter.patch("/:id/ftd",LeadController.updateLead)

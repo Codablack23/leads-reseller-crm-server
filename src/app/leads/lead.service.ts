@@ -1,6 +1,7 @@
 import { LeadEntity } from "@common/entities/lead.entity";
 import { StatusMapEntity } from "@common/entities/statusMap.entity";
-import { StatusMapType } from "@common/enums";
+import { LeadStatus, StatusMapType } from "@common/enums";
+import AppResponse from "@common/services/service.response";
 import { AppDataSource } from "@core/core.db";
 import { NotFoundError } from "@core/core.error";
 import { PaginationUtility, SanitizerProvider } from "@lib/utils";
@@ -15,6 +16,11 @@ export class LeadService {
    * Fetch all leads with related traffic, brand, and affiliate data.
    */
   async getLeads(ftdQuery?: FtdQuery, pagination?: Pagination) {
+
+
+    const statistics = await this.getLeadStats()
+
+
     // Build where clause dynamically
     const whereClause: any = {};
     if (ftdQuery && typeof ftdQuery.is_ftd === "boolean") {
@@ -30,7 +36,11 @@ export class LeadService {
     const [[leadsRes, count], statusMap] = await Promise.all([
       this.leadRepository.findAndCount({
         where: whereClause,
-        relations: { traffic: { brand: true, affiliate: true } },
+        relations: {
+          traffic: { brand: true },
+          affiliate: true,
+          statusMap: { status: true }
+        },
         take: limit,
         skip: offset,
       }),
@@ -75,8 +85,16 @@ export class LeadService {
     // Build pagination metadata
     const paginationMeta = PaginationUtility.getPaginationMetaData(count, limit, page);
 
+    const sortedLeads = [...leads].sort((a, b) => {
+      const dateA = new Date(a.createdAt.toString()).getTime()
+      const dateB = new Date(b.createdAt.toString()).getTime()
+
+      return dateB - dateA
+    })
+
     return {
-      leads,
+      leads: sortedLeads,
+      statistics,
       total: count,
       pagination: paginationMeta,
     };
@@ -87,20 +105,22 @@ export class LeadService {
    * Fetch a single lead by ID, throwing if not found.
    */
   async getLead(id: string) {
-    const lead:ExtendedObject<LeadEntity>| null = await this.leadRepository.findOne({
+    const lead: ExtendedObject<LeadEntity> | null = await this.leadRepository.findOne({
       where: { id },
-      relations: { traffic: { brand: true, affiliate: true } },
+      relations: {
+        traffic: {
+          brand: true
+        },
+        affiliate: true,
+        statusMap: {
+          status: true
+        }
+      },
     });
 
     if (!lead) {
       throw new NotFoundError(`Lead with ID ${id} not found`);
     }
-
-    // Fetch all status maps
-    const statusMap = await this.statusMapRepository.find();
-
-
-  
     return lead;
   }
 
@@ -129,5 +149,37 @@ export class LeadService {
   async deleteLead(id: string): Promise<void> {
     const lead = await this.getLead(id);
     await this.leadRepository.remove(lead);
+  }
+
+  async getLeadStats() {
+    const [
+      successfulLeads,
+      rejectedLeads,
+      convertedLeads
+    ] = await Promise.all([
+      this.leadRepository.count({
+        where: {
+          lead_status: LeadStatus.ACCEPTED
+        }
+      }),
+      this.leadRepository.count({
+        where: {
+          lead_status: LeadStatus.REJECTED
+        }
+      }),
+      this.leadRepository.count({
+        where: {
+          is_ftd: true
+        }
+      })
+    ])
+
+    const data = {
+      successfulLeads,
+      rejectedLeads,
+      convertedLeads,
+    }
+
+    return data
   }
 }

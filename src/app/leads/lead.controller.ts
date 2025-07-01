@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import { LeadService } from "./lead.service";
 import { QueryProvider } from "@common/providers";
+import AppResponse from "@common/services/service.response";
 
 class LeadController {
   constructor(private leadService: LeadService) {}
@@ -18,6 +19,14 @@ class LeadController {
         status: "success",
         data,
       });
+    } catch (err) {
+      next(err);
+    }
+  };
+  getLeadStats: RequestHandler = async (req, res, next) => {
+    try {
+      const data = this.leadService.getLeadStats()
+      AppResponse.sendOkResponse(res,{data},"Leads Statistics retrieved")
     } catch (err) {
       next(err);
     }

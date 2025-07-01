@@ -15,5 +15,11 @@ export class ApivValidations{
         .notEmpty().withMessage("Please provide a lead phone number"),
         body("campaign").optional()
         .notEmpty().withMessage("Please provide a campaign"),
+        body("type").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
+        body("status").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
+        body("call_status").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
     ]
 }

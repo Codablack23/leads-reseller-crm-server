@@ -2,7 +2,8 @@ import { UserSessionData } from "@interfaces/index";
 import { SessionData } from 'express-session';
 import { Request } from "express";
 
-export { }
+
+
 
 declare global {
     namespace Express {
@@ -40,3 +41,4 @@ export type QueryCleanerHandler<T> = (queryReq: QueryRequest<T>) => T
 
 export type ExtendedObject<T> = T & {[key:string]:any}  
 
+export * from "./leads.type"

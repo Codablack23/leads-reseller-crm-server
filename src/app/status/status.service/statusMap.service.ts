@@ -2,6 +2,7 @@ import { AffiliateEntity } from "@common/entities/affiliate.entity";
 import { LeadEntity } from "@common/entities/lead.entity";
 import { StatusListEntity } from "@common/entities/statusList.entity";
 import { StatusMapEntity } from "@common/entities/statusMap.entity";
+import { StatusMapType } from "@common/enums";
 import { AppDataSource } from "@core/core.db";
 import { BadRequest, NotFoundError } from "@core/core.error";
 import { PaginationUtility } from "@lib/utils";
@@ -12,6 +13,7 @@ interface AddStatusMapRequest {
   status_id: string,
   lead_id?: string,
   affiliate_id?: string,
+  target_type:StatusMapType,
   map_type: "lead" | "affiliate"
 }
 
@@ -93,6 +95,7 @@ export class StatusMapService {
   async addStatusMap({
     status_id,
     status_text,
+    target_type,
     lead_id,
     affiliate_id,
   }: AddStatusMapRequest) {
@@ -107,7 +110,7 @@ export class StatusMapService {
     if (!status) throw new BadRequest("Status not found")
     if (!affiliate) throw new BadRequest("Affiliate not found")
 
-    const statusMap = this.statusMapRepository.create({ lead, status, affiliate, status_text })
+    const statusMap = this.statusMapRepository.create({ lead, status,target_type ,affiliate, status_text })
 
     const newStatusMap = await this.statusMapRepository.save(statusMap)
 

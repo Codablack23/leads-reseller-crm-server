@@ -1,196 +1,279 @@
-import { APIKeyEntity } from "@common/entities/apiKey.entity"
-import { AppDataSource } from "@core/core.db"
-import { LeadRequestData } from "../data"
-import { TrafficEntity } from "@common/entities/traffic.entity"
-import { LeadEntity } from "@common/entities/lead.entity"
-import { DateTime } from "luxon"
-import { BadRequest } from "@core/core.error"
-import countries from "@lib/data/countries.json"
-import { SanitizerProvider } from "@lib/utils"
+import { APIKeyEntity } from "@common/entities/apiKey.entity";
+import { AppDataSource } from "@core/core.db";
+import { LeadRequestData } from "../data";
+import { TrafficEntity } from "@common/entities/traffic.entity";
+import { AffiliateEntity } from "@common/entities/affiliate.entity";
+import { LeadEntity } from "@common/entities/lead.entity";
+import { DateTime } from "luxon";
+import { BadRequest } from "@core/core.error";
+import countries from "@lib/data/countries.json";
+import { SanitizerProvider } from "@lib/utils";
+import { LeadStatus } from "@common/enums";
 
+/**
+ * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
+ */
 export class LeadsAPIService {
-    private trafficRepository = AppDataSource.getRepository(TrafficEntity)
-    private leadRepository = AppDataSource.getRepository(LeadEntity)
-    private apiKeyRepository = AppDataSource.getRepository(APIKeyEntity)
+  private trafficRepository = AppDataSource.getRepository(TrafficEntity);
+  private leadRepository = AppDataSource.getRepository(LeadEntity);
+  private apiKeyRepository = AppDataSource.getRepository(APIKeyEntity);
 
+  /**
+   * Parses and standardizes a country input to system format.
+   * Throws if no valid match is found.
+   */
+  parseCountry(country: string): string {
+    const trimmedInput = country.trim().toLowerCase();
 
-    parseCountry(country: string) {
-        const trimmedInput = country.trim().toLowerCase();
+    const match = countries.find(({ name, cca2, cca3 }) =>
+      [name?.common, name?.official, cca2, cca3].some(part =>
+        part?.toLowerCase() === trimmedInput
+      )
+    );
 
-        const searchCountry = countries.find(({ name, cca2, cca3 }) => {
-            const common = name?.common?.toLowerCase();
-            const official = name?.official?.toLowerCase();
-            const code = cca3?.toLowerCase();
-            const code2 = cca2?.toLowerCase();
+    if (!match) throw new BadRequest("Invalid country name");
 
-            return (
-                common === trimmedInput ||
-                official === trimmedInput ||
-                code === trimmedInput ||
-                code2 === trimmedInput
-            );
+    return `${match.cca3}-${match.name.common}`;
+  }
+
+  /**
+   * Gets the primary non-English language of a country.
+   * Defaults to 'eng' if none found.
+   */
+  getCountryLanguage(country: string): string {
+    const input = country.trim().toLowerCase();
+
+    const matched = countries.find(({ name, cca2, cca3 }) =>
+      [name?.common, name?.official, cca2, cca3].some(part =>
+        part?.toLowerCase() === input
+      )
+    );
+
+    if (!matched) throw new BadRequest("Invalid country name");
+
+    const nonEnglish = Object.keys(matched.languages || {}).filter(
+      lang => lang !== "eng"
+    );
+
+    return nonEnglish[0] || "eng";
+  }
+
+  /**
+   * Retrieves the most eligible traffic for an affiliate within a country.
+   */
+  async getAffiliateTraffic(
+    affiliateId: string,
+    countryInput: string
+  ): Promise<[TrafficEntity | null, string | null]> {
+    try {
+      const country = this.parseCountry(countryInput);
+
+      const traffics = await this.trafficRepository.find({
+        where: { country, affiliate: { id: affiliateId } },
+        relations: { lead: true },
+      });
+
+      if (!traffics.length) throw new BadRequest("Country not allowed");
+
+      const valid = traffics.filter(t =>
+        this.validateTimeRange(t.openingTime, t.closingTime) &&
+        this.validateTrafficDays(t.trafficDays.split(","))
+      );
+
+      if (!valid.length) throw new BadRequest("Invalid time/day for leads");
+
+      const today = new Date().toISOString().split("T")[0];
+
+      const assigned = new Map<string, number>();
+
+      for (const traffic of valid.sort((a, b) => b.priority - a.priority)) {
+        const todayCount = this.countTodayLeads(traffic, today);
+
+        if (todayCount >= traffic.dailyCap) continue;
+
+        const count = assigned.get(traffic.id) ?? 0;
+
+        if (count >= traffic.weight) continue;
+
+        assigned.set(traffic.id, count + 1);
+
+        return [traffic, null];
+      }
+
+      throw new BadRequest("No eligible traffic found");
+    } catch (err) {
+      return [null, (err as Error).message];
+    }
+  }
+
+  /**
+   * Checks whether the current time falls within the given time range.
+   */
+  validateTimeRange(openingTime: string, closingTime: string): boolean {
+    const now = DateTime.now();
+
+    const format = openingTime.length === 5 ? "HH:mm" : "HH:mm:ss";
+
+    const open = DateTime.fromFormat(openingTime, format).set(now.toObject());
+    const close = DateTime.fromFormat(closingTime, format).set(now.toObject());
+
+    if (close < open) {
+      // Overnight range
+      return now >= open || now <= close;
+    }
+
+    return now >= open && now <= close;
+  }
+
+  /**
+   * Checks if the current day matches any traffic active days.
+   */
+  validateTrafficDays(days: string[]): boolean {
+    const today = DateTime.now().toFormat("cccc").toLowerCase();
+
+    return days.some(day => day.trim().toLowerCase() === today);
+  }
+
+  /**
+   * Fetches leads for an affiliate or brand using their API key.
+   */
+  async getUserLeads(apiKey: string) {
+    const { affiliate, brand } = await this.getAffiliateFromAPIKey(apiKey);
+
+    return this.leadRepository.find({
+      where: {
+        traffic: {
+          ...(affiliate ? { affiliate } : { brand })
+        }
+      },
+    });
+  }
+
+  /**
+   * Adds a lead and assigns it to eligible traffic if found.
+   */
+  async addLeadData(affiliate: AffiliateEntity, leadData: LeadRequestData) {
+
+    const affiliateId = affiliate.id
+
+    const country = this.parseCountry(leadData.country);
+    const language = this.getCountryLanguage(leadData.country);
+    const today = new Date().toISOString().split("T")[0];
+
+    const traffics = await this.trafficRepository.find({
+      where: { country, affiliate: { id: affiliateId } },
+      relations: { lead: true },
+    });
+
+    if (!traffics.length) {
+      return this.saveAndSanitizeLead({
+        ...leadData,
+        affiliate,
+        lead_status: LeadStatus.REJECTED,
+        rejection_reason: "Affiliate has no traffic configured for the specified country",
+      });
+    }
+
+    const valid = traffics.filter(t =>
+      this.validateTimeRange(t.openingTime, t.closingTime) &&
+      this.validateTrafficDays(t.trafficDays.split(","))
+    );
+
+    if (!valid.length) {
+      return this.saveAndSanitizeLead({
+        ...leadData,
+        affiliate,
+        lead_status: LeadStatus.REJECTED,
+        rejection_reason: "Lead was submitted outside the traffic's active time or day",
+      });
+    }
+
+    const assigned = new Map<string, number>();
+
+    for (const traffic of valid.sort((a, b) => b.priority - a.priority)) {
+      const todayCount = this.countTodayLeads(traffic, today);
+
+      if (todayCount >= traffic.dailyCap) {
+        const rejected = await this.saveAndSanitizeLead({
+          ...leadData,
+          affiliate,
+          lead_status: LeadStatus.REJECTED,
+          rejection_reason: "Traffic has reached its daily lead limit",
         });
 
-        if (!searchCountry) {
-            throw new BadRequest("Invalid country name");
-        }
+        if (traffic.skipFallback) return rejected;
 
-        return `${searchCountry.cca3}-${searchCountry.name.common}`;
+        continue;
+      }
+
+      const count = assigned.get(traffic.id) ?? 0;
+
+      if (count >= traffic.weight) continue;
+
+      assigned.set(traffic.id, count + 1);
+
+      return this.saveAndSanitizeLead({
+        ...leadData,
+        traffic,
+        affiliate,
+        language,
+        lead_status: LeadStatus.ACCEPTED,
+      });
     }
 
+    return this.saveAndSanitizeLead({
+      ...leadData,
+      affiliate,
+      lead_status: LeadStatus.REJECTED,
+      rejection_reason: "No traffics available for lead assignment after checks",
+    });
+  }
 
-    async getAffiliateTraffic(affiliateId: string, countryString: string) {
-        // Parse country to system format
-        const country = this.parseCountry(countryString);
+  /**
+   * Saves and sanitizes a lead object.
+   */
+  private async saveAndSanitizeLead(payload: Partial<LeadEntity>) {
+    const lead = this.leadRepository.create(payload);
 
-        // Fetch traffics with related leads (to count leads per traffic)
-        const traffics = await this.trafficRepository.find({
-            where: { country, affiliate: { id: affiliateId } },
-            relations: { lead: true },
-        });
+    const saved = await this.leadRepository.save(lead);
 
-        if (traffics.length === 0) {
-            throw new BadRequest("Sorry you cannot send in leads for this country");
-        }
+    return SanitizerProvider.sanitizeObject(saved, ["traffic.lead"]);
+  }
 
-        // Filter traffics valid for current time and day
-        const validTraffics = traffics.filter(t => {
-            const isNowTimeSupported = this.validateTimeRange(t.openingTime, t.closingTime);
-            const isTodaySupported = this.validateTrafficDays(t.trafficDays.split(","));
-            return isNowTimeSupported && isTodaySupported;
-        });
+  /**
+   * Counts how many leads were created today for a given traffic.
+   */
+  private countTodayLeads(traffic: TrafficEntity, today: string): number {
+    return traffic.lead.filter(l =>
+      l.createdAt.toISOString().split("T")[0] === today
+    ).length;
+  }
 
-        if (validTraffics.length === 0) {
-            throw new BadRequest("Sorry you cannot send leads at this time or day");
-        }
+  /**
+   * Adds a lead using an API key to fetch affiliate.
+   */
+  async addLead(apiKey: string, leadData: LeadRequestData) {
+    const { affiliate } = await this.getAffiliateFromAPIKey(apiKey);
 
-        // Sort traffics by descending priority (highest priority first)
-        const sortedTraffics = [...validTraffics].sort((a, b) => b.priority - a.priority);
+    if (!affiliate) throw new BadRequest("Invalid API Key for affiliate");
 
-        // Get today's date string (to filter leads created today)
-        const today = new Date().toISOString().split("T")[0];
+    const lead = await this.addLeadData(affiliate, leadData);
 
-        // Helper: count leads created today for a given traffic
-        const countTodayLeads = (traffic: typeof traffics[0]) => {
-            return traffic.lead.filter(lead => {
-                const leadDate = lead.createdAt.toISOString().split("T")[0];
-                return leadDate === today;
-            }).length;
-        };
+    return { lead };
+  }
 
-        // Track how many leads have been assigned to each traffic in this request cycle (weight distribution)
-        // Since we assign only one lead per request, this is basically to check if weight allows assignment.
-        // Ideally, you might track this globally (e.g., cache or DB) if multiple leads per second are possible.
-        // For this example, assume 0 leads assigned this cycle (or extend if you keep state)
-        const assignedThisCycle = new Map<string, number>();
+  /**
+   * Resolves affiliate and brand information from API key.
+   */
+  private async getAffiliateFromAPIKey(apiKey: string) {
+    const apiKeyRes = await this.apiKeyRepository.findOne({
+      where: { id: apiKey },
+      relations: ["affiliate", "brand"],
+    });
 
-        // Find first eligible traffic based on priority, weight, and daily cap
-        for (const traffic of sortedTraffics) {
-            const todayLeadCount = countTodayLeads(traffic);
-
-            // Daily cap check
-            if (todayLeadCount >= traffic.dailyCap) {
-                continue; // daily cap reached, skip this traffic
-            }
-
-            // Weight distribution check:
-            // For simplicity assume 0 assigned this cycle if no global tracking yet
-            const assignedCount = assignedThisCycle.get(traffic.id) ?? 0;
-            if (assignedCount >= traffic.weight) {
-                continue; // weight quota reached, skip this traffic
-            }
-
-            // Eligible traffic found, update assignedThisCycle count and return traffic
-            assignedThisCycle.set(traffic.id, assignedCount + 1);
-
-            return traffic; // return this traffic for lead assignment
-        }
-
-        // If none found, throw error
-        throw new BadRequest("No traffics available for lead assignment after checks");
-    }
-
-
-
-    validateTimeRange(openingTime: string, closingTime: string): boolean {
-        const now = DateTime.now();
-
-        const format = openingTime.length === 5 ? 'HH:mm' : 'HH:mm:ss';
-
-        const openDT = DateTime.fromFormat(openingTime, format).set({
-            year: now.year,
-            month: now.month,
-            day: now.day,
-        });
-
-        const closeDT = DateTime.fromFormat(closingTime, format).set({
-            year: now.year,
-            month: now.month,
-            day: now.day,
-        });
-
-        if (closeDT < openDT) {
-            // Overnight range: e.g. 22:00 - 04:00
-            return now >= openDT || now <= closeDT;
-        }
-
-        return now >= openDT && now <= closeDT;
-    }
-
-    validateTrafficDays(trafficDays: string[]) {
-        const now = DateTime.now();
-        const currentDayName = now.toFormat('cccc').toLowerCase(); // full day name lowercase
-        return trafficDays.some(day => day.trim().toLowerCase() === currentDayName);
-    }
-
-
-
-    async getUserLeads(apiKey: string) {
-        const { affiliate, brand } = await this.getAffiliateFromAPIKey(apiKey)
-
-        if (affiliate) {
-            const leads = this.leadRepository.find({
-                where: { traffic: { affiliate } }
-            })
-
-            return leads
-        }
-        const leads = this.leadRepository.find({
-            where: { traffic: { brand } }
-        })
-
-        return leads
-
-    }
-    async addLead(apiKey: string, leadData: LeadRequestData) {
-        const { affiliate } = await this.getAffiliateFromAPIKey(apiKey)
-
-        if (!affiliate) throw new BadRequest("Invalid API Key for affiliate")
-
-        const traffic = await this.getAffiliateTraffic(affiliate?.id as string, leadData.country)
-        
-        const newLead =  this.leadRepository.create({
-            ...leadData,
-            traffic,
-        })
-
-        const lead = await this.leadRepository.save(newLead)
-        const sanitizedLead = SanitizerProvider.sanitizeObject(lead,["traffic.lead"])
-
-        return {lead:sanitizedLead}
-    }
-
-    private async getAffiliateFromAPIKey(apiKey: string) {
-        const apiKeyRes = await this.apiKeyRepository.findOne({
-            where: {
-                id: apiKey
-            },
-            relations: ["affiliate", "brand"]
-        })
-
-        const affiliate = apiKeyRes?.affiliate
-        const brand = apiKeyRes?.brand
-
-        return { affiliate, brand }
-    }
+    return {
+      affiliate: apiKeyRes?.affiliate,
+      brand: apiKeyRes?.brand,
+    };
+  }
 }
