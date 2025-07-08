@@ -71,7 +71,7 @@ export class AffiliateService {
             closingTime:affiliateData.lead_closing_time,
             affiliate:newAffiliate,
             trafficDays:affiliateData.traffic_days.join(","),
-            dailyCap:affiliateData.dailyCap,
+            dailyCap:affiliateData.dailyCap ?? 50,
         })
 
         await this.trafficRepository.save(traffic)
