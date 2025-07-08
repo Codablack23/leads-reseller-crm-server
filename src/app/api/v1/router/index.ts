@@ -26,7 +26,7 @@ v1ApiRouter.post("/leads",
 
 // AFFILIATES API ENDPOINTS
 v1ApiRouter.post("/affiliates",
-    useValidation(AffiliateValidator.createAffiliateSchema),
+    useValidation(AffiliateValidator.addAffiliateSchema),
     useValidation(AuthValidator.registerAffiliateSchema),
     AffiliateAPIController.addAffiliate
 )

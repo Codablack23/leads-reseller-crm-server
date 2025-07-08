@@ -9,7 +9,7 @@ class AffiliateAPIController{
     addAffiliate:RequestHandler = async(req,res,next)=>{
         try {
             const affiliate = await this.affiliateAPIService.addAffiliate(req.body)
-            AppResponse.sendOkResponse(res, {affiliate},"Lead added successfull")
+            AppResponse.sendOkResponse(res, {affiliate},"Affiliate added successfull")
         } catch (error) {
             next(error)
         }

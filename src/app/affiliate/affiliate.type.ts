@@ -1,7 +1,11 @@
 export interface AffiliateRequestData {
-    affiliateId:string,
-    name? :string,
-    email? :string,
+    name :string,
+    email :string,
+    country:string
+    dailyCap:number,
+    lead_opening_time:string,
+    lead_closing_time:string,
+    traffic_days:string[]
 }
 export interface AffiliateUpdateRequestData {
     affiliateId?:string,

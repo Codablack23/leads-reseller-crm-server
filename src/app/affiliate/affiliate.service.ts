@@ -47,16 +47,39 @@ export class AffiliateService {
         return traffic
     }
 
+     private  generateCode(length = 6) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+
     async addAffliate(affiliateData: AffiliateRequestData) {
+
+        const affiliateId = this.generateCode()
+
         const affiliateInstance = this.affiliateRepository.create({
-            ...affiliateData,
+            name:affiliateData.name,
+            email:affiliateData.email,
+            affiliateId,
         })
 
         const newAffiliate = await this.affiliateRepository.save(affiliateInstance)
+
+        const traffic = this.trafficRepository.create({
+            country:affiliateData.country,
+            openingTime:affiliateData.lead_opening_time,
+            closingTime:affiliateData.lead_closing_time,
+            affiliate:newAffiliate,
+            trafficDays:affiliateData.traffic_days.join(","),
+            dailyCap:affiliateData.dailyCap,
+        })
+
+        await this.trafficRepository.save(traffic)
+
         const user = await this.authService.registerUser({
             email: `${affiliateData.email}`,
             password: `${AFFILIATE_DEFAULT_PASSWORD}`,
-            name: affiliateData.name || affiliateData.affiliateId,
+            name: affiliateData.name || affiliateId,
         },{
             affiliate:newAffiliate,
         })
