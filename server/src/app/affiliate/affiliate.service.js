@@ -65,14 +65,33 @@ class AffiliateService {
             return traffic;
         });
     }
+    generateCode(length = 6) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
     addAffliate(affiliateData) {
         return __awaiter(this, void 0, void 0, function* () {
-            const affiliateInstance = this.affiliateRepository.create(Object.assign({}, affiliateData));
+            var _a;
+            const affiliateId = this.generateCode();
+            const affiliateInstance = this.affiliateRepository.create({
+                name: affiliateData.name,
+                email: affiliateData.email,
+                affiliateId,
+            });
             const newAffiliate = yield this.affiliateRepository.save(affiliateInstance);
+            const traffic = this.trafficRepository.create({
+                country: affiliateData.country,
+                openingTime: affiliateData.lead_opening_time,
+                closingTime: affiliateData.lead_closing_time,
+                affiliate: newAffiliate,
+                trafficDays: affiliateData.traffic_days.join(","),
+                dailyCap: (_a = affiliateData.dailyCap) !== null && _a !== void 0 ? _a : 50,
+            });
+            yield this.trafficRepository.save(traffic);
             const user = yield this.authService.registerUser({
                 email: `${affiliateData.email}`,
                 password: `${core_secrets_1.AFFILIATE_DEFAULT_PASSWORD}`,
-                name: affiliateData.name || affiliateData.affiliateId,
+                name: affiliateData.name || affiliateId,
             }, {
                 affiliate: newAffiliate,
             });

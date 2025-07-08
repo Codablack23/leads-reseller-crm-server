@@ -92,7 +92,7 @@ class StatusMapService {
      * Create and save a new lead.
      */
     addStatusMap(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ status_id, status_text, lead_id, affiliate_id, }) {
+        return __awaiter(this, arguments, void 0, function* ({ status_id, status_text, target_type, lead_id, affiliate_id, }) {
             const [lead, status, affiliate] = yield Promise.all([
                 this.leadRepository.findOne({ where: { id: lead_id } }),
                 yield this.statusListRepository.findOne({ where: { id: status_id } }),
@@ -104,7 +104,7 @@ class StatusMapService {
                 throw new core_error_1.BadRequest("Status not found");
             if (!affiliate)
                 throw new core_error_1.BadRequest("Affiliate not found");
-            const statusMap = this.statusMapRepository.create({ lead, status, affiliate, status_text });
+            const statusMap = this.statusMapRepository.create({ lead, status, target_type, affiliate, status_text });
             const newStatusMap = yield this.statusMapRepository.save(statusMap);
             return newStatusMap;
         });

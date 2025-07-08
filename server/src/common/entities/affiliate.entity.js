@@ -15,6 +15,7 @@ const apiKey_entity_1 = require("./apiKey.entity");
 const user_entity_1 = require("./user.entity");
 const traffic_entity_1 = require("./traffic.entity");
 const statusMap_entity_1 = require("./statusMap.entity");
+const lead_entity_1 = require("./lead.entity");
 let AffiliateEntity = class AffiliateEntity {
 };
 exports.AffiliateEntity = AffiliateEntity;
@@ -42,6 +43,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => traffic_entity_1.TrafficEntity, (traffic) => traffic.affiliate, { nullable: true }),
     __metadata("design:type", Array)
 ], AffiliateEntity.prototype, "traffic", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => lead_entity_1.LeadEntity, (lead) => lead.affiliate, { nullable: true }),
+    __metadata("design:type", Array)
+], AffiliateEntity.prototype, "lead", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => statusMap_entity_1.StatusMapEntity, (statusMap) => statusMap.affiliate, { nullable: true }),
     __metadata("design:type", Array)

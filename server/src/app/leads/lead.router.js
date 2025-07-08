@@ -8,6 +8,7 @@ const lead_controller_1 = __importDefault(require("./lead.controller"));
 // import { LeadValidator } from "./lead.validator";
 const leadsRouter = (0, express_1.Router)();
 leadsRouter.get("/", lead_controller_1.default.getLeads);
+leadsRouter.get("/statistics", lead_controller_1.default.getLeadStats);
 leadsRouter.get("/:id", lead_controller_1.default.getLead);
 leadsRouter.patch("/:id", lead_controller_1.default.updateLead);
 leadsRouter.patch("/:id/ftd", lead_controller_1.default.updateLead);

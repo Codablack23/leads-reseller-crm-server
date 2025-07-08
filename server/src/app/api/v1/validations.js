@@ -18,4 +18,10 @@ ApivValidations.addLeadValidation = [
         .notEmpty().withMessage("Please provide a lead phone number"),
     (0, express_validator_1.body)("campaign").optional()
         .notEmpty().withMessage("Please provide a campaign"),
+    (0, express_validator_1.body)("type").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
+    (0, express_validator_1.body)("status").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
+    (0, express_validator_1.body)("call_status").optional()
+        .notEmpty().withMessage("Please provide a campaign"),
 ];

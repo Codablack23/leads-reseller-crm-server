@@ -20,7 +20,7 @@ class AffiliateAPIController {
         this.addAffiliate = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const affiliate = yield this.affiliateAPIService.addAffiliate(req.body);
-                service_response_1.default.sendOkResponse(res, { affiliate }, "Lead added successfull");
+                service_response_1.default.sendOkResponse(res, { affiliate }, "Affiliate added successfull");
             }
             catch (error) {
                 next(error);

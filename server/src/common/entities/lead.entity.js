@@ -13,6 +13,9 @@ exports.LeadEntity = void 0;
 const typeorm_1 = require("typeorm");
 const traffic_entity_1 = require("./traffic.entity");
 const statusMap_entity_1 = require("./statusMap.entity");
+const enums_1 = require("../enums");
+const affiliate_entity_1 = require("./affiliate.entity");
+// import { LeadStatus } from "../../types/index";
 let LeadEntity = class LeadEntity {
 };
 exports.LeadEntity = LeadEntity;
@@ -41,9 +44,17 @@ __decorate([
     __metadata("design:type", String)
 ], LeadEntity.prototype, "phone", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { default: "RECEIVED" }),
+    (0, typeorm_1.Column)("text", { nullable: true }),
     __metadata("design:type", String)
 ], LeadEntity.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)("json", { nullable: true }),
+    __metadata("design:type", Object)
+], LeadEntity.prototype, "receiver_status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "enum", enum: enums_1.LeadStatus }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "lead_status", void 0);
 __decorate([
     (0, typeorm_1.Column)("text", { nullable: true }),
     __metadata("design:type", String)
@@ -53,15 +64,27 @@ __decorate([
     __metadata("design:type", String)
 ], LeadEntity.prototype, "campaign", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { default: "PENDING", }),
+    (0, typeorm_1.Column)("text", { nullable: true }),
     __metadata("design:type", String)
-], LeadEntity.prototype, "receiver_status", void 0);
+], LeadEntity.prototype, "funnel_name", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { default: "PENDING", }),
+    (0, typeorm_1.Column)("text"),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "language", void 0);
+__decorate([
+    (0, typeorm_1.Column)("text", { nullable: true }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "type", void 0);
+__decorate([
+    (0, typeorm_1.Column)("text", { nullable: true }),
+    __metadata("design:type", String)
+], LeadEntity.prototype, "rejection_reason", void 0);
+__decorate([
+    (0, typeorm_1.Column)("text", { nullable: true }),
     __metadata("design:type", String)
 ], LeadEntity.prototype, "call_status", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { default: "PENDING", nullable: true }),
+    (0, typeorm_1.Column)("text", { nullable: true }),
     __metadata("design:type", String)
 ], LeadEntity.prototype, "ftd_status", void 0);
 __decorate([
@@ -81,7 +104,11 @@ __decorate([
     __metadata("design:type", traffic_entity_1.TrafficEntity)
 ], LeadEntity.prototype, "traffic", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => statusMap_entity_1.StatusMapEntity, (statusMap) => statusMap.lead, { cascade: false, onDelete: 'NO ACTION' }),
+    (0, typeorm_1.ManyToOne)(() => affiliate_entity_1.AffiliateEntity, (affiliate) => affiliate.lead, { cascade: false, onDelete: 'NO ACTION', nullable: true }),
+    __metadata("design:type", affiliate_entity_1.AffiliateEntity)
+], LeadEntity.prototype, "affiliate", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => statusMap_entity_1.StatusMapEntity, (statusMap) => statusMap.lead, { cascade: false, nullable: true, onDelete: 'NO ACTION' }),
     __metadata("design:type", Array)
 ], LeadEntity.prototype, "statusMap", void 0);
 __decorate([

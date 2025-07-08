@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadService = void 0;
 const lead_entity_1 = require("../../common/entities/lead.entity");
 const statusMap_entity_1 = require("../../common/entities/statusMap.entity");
+const enums_1 = require("../../common/enums");
 const core_db_1 = require("../../core/core.db");
 const core_error_1 = require("../../core/core.error");
 const utils_1 = require("../../lib/utils");
@@ -26,6 +27,7 @@ class LeadService {
     getLeads(ftdQuery, pagination) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
+            const statistics = yield this.getLeadStats();
             // Build where clause dynamically
             const whereClause = {};
             if (ftdQuery && typeof ftdQuery.is_ftd === "boolean") {
@@ -39,7 +41,11 @@ class LeadService {
             const [[leadsRes, count], statusMap] = yield Promise.all([
                 this.leadRepository.findAndCount({
                     where: whereClause,
-                    relations: { traffic: { brand: true, affiliate: true } },
+                    relations: {
+                        traffic: { brand: true },
+                        affiliate: true,
+                        statusMap: { status: true }
+                    },
                     take: limit,
                     skip: offset,
                 }),
@@ -77,8 +83,14 @@ class LeadService {
             });
             // Build pagination metadata
             const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(count, limit, page);
+            const sortedLeads = [...leads].sort((a, b) => {
+                const dateA = new Date(a.createdAt.toString()).getTime();
+                const dateB = new Date(b.createdAt.toString()).getTime();
+                return dateB - dateA;
+            });
             return {
-                leads,
+                leads: sortedLeads,
+                statistics,
                 total: count,
                 pagination: paginationMeta,
             };
@@ -91,13 +103,19 @@ class LeadService {
         return __awaiter(this, void 0, void 0, function* () {
             const lead = yield this.leadRepository.findOne({
                 where: { id },
-                relations: { traffic: { brand: true, affiliate: true } },
+                relations: {
+                    traffic: {
+                        brand: true
+                    },
+                    affiliate: true,
+                    statusMap: {
+                        status: true
+                    }
+                },
             });
             if (!lead) {
                 throw new core_error_1.NotFoundError(`Lead with ID ${id} not found`);
             }
-            // Fetch all status maps
-            const statusMap = yield this.statusMapRepository.find();
             return lead;
         });
     }
@@ -129,6 +147,33 @@ class LeadService {
         return __awaiter(this, void 0, void 0, function* () {
             const lead = yield this.getLead(id);
             yield this.leadRepository.remove(lead);
+        });
+    }
+    getLeadStats() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const [successfulLeads, rejectedLeads, convertedLeads] = yield Promise.all([
+                this.leadRepository.count({
+                    where: {
+                        lead_status: enums_1.LeadStatus.ACCEPTED
+                    }
+                }),
+                this.leadRepository.count({
+                    where: {
+                        lead_status: enums_1.LeadStatus.REJECTED
+                    }
+                }),
+                this.leadRepository.count({
+                    where: {
+                        is_ftd: true
+                    }
+                })
+            ]);
+            const data = {
+                successfulLeads,
+                rejectedLeads,
+                convertedLeads,
+            };
+            return data;
         });
     }
 }

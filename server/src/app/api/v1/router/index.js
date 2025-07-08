@@ -21,6 +21,6 @@ v1ApiRouter.get("/", function (req, res) {
 v1ApiRouter.get("/leads", middleware_1.ApiMiddleware.validateApiKey, leads_controller_1.default.getLeads);
 v1ApiRouter.post("/leads", middleware_1.ApiMiddleware.validateApiKey, (0, middleware_validate_1.default)(validations_1.ApivValidations.addLeadValidation), leads_controller_1.default.addLead);
 // AFFILIATES API ENDPOINTS
-v1ApiRouter.post("/affiliates", (0, middleware_validate_1.default)(affiliate_validator_1.AffiliateValidator.createAffiliateSchema), (0, middleware_validate_1.default)(auth_validator_1.AuthValidator.registerAffiliateSchema), affiliate_controller_1.default.addAffiliate);
+v1ApiRouter.post("/affiliates", (0, middleware_validate_1.default)(affiliate_validator_1.AffiliateValidator.addAffiliateSchema), (0, middleware_validate_1.default)(auth_validator_1.AuthValidator.registerAffiliateSchema), affiliate_controller_1.default.addAffiliate);
 v1ApiRouter.post("/brands", (0, middleware_validate_1.default)(brand_validator_1.BrandValidator.createBrandSchema), (0, middleware_validate_1.default)(auth_validator_1.AuthValidator.registerBrandSchema), brand_controller_1.default.addBrand);
 exports.default = v1ApiRouter;
