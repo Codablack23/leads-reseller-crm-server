@@ -35,16 +35,7 @@ _a = AffiliateValidator;
 AffiliateValidator.addAffiliateSchema = [
     (0, express_validator_1.body)("email").escape()
         .isEmail().withMessage("Please provide a valid email"),
-    (0, express_validator_1.body)("dailyCap").optional().escape()
-        .notEmpty().withMessage("Please add a daily cap for leads"),
     (0, express_validator_1.body)("country")
-        .notEmpty().withMessage("Please provide a country for your affiliate"),
-    (0, express_validator_1.body)("lead_opening_time")
-        .notEmpty().withMessage("Please provide a starting time for your traffic"),
-    (0, express_validator_1.body)("lead_closing_time")
-        .notEmpty().withMessage("Please provide a closing time for traffic"),
-    (0, express_validator_1.body)("traffic_days")
-        .notEmpty().withMessage("Please provide traffic days for your affiliate")
 ];
 AffiliateValidator.createAffiliateSchema = [
     (0, express_validator_1.body)("affiliateId").escape()

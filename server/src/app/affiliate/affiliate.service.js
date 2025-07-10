@@ -71,7 +71,6 @@ class AffiliateService {
     }
     addAffliate(affiliateData) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
             const affiliateId = this.generateCode();
             const affiliateInstance = this.affiliateRepository.create({
                 name: affiliateData.name,
@@ -79,15 +78,6 @@ class AffiliateService {
                 affiliateId,
             });
             const newAffiliate = yield this.affiliateRepository.save(affiliateInstance);
-            const traffic = this.trafficRepository.create({
-                country: affiliateData.country,
-                openingTime: affiliateData.lead_opening_time,
-                closingTime: affiliateData.lead_closing_time,
-                affiliate: newAffiliate,
-                trafficDays: affiliateData.traffic_days,
-                dailyCap: (_a = affiliateData.dailyCap) !== null && _a !== void 0 ? _a : 50,
-            });
-            yield this.trafficRepository.save(traffic);
             const user = yield this.authService.registerUser({
                 email: `${affiliateData.email}`,
                 password: `${core_secrets_1.AFFILIATE_DEFAULT_PASSWORD}`,

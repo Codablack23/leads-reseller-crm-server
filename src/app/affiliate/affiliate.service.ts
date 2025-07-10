@@ -65,17 +65,6 @@ export class AffiliateService {
 
         const newAffiliate = await this.affiliateRepository.save(affiliateInstance)
 
-        const traffic = this.trafficRepository.create({
-            country:affiliateData.country,
-            openingTime:affiliateData.lead_opening_time,
-            closingTime:affiliateData.lead_closing_time,
-            affiliate:newAffiliate,
-            trafficDays:affiliateData.traffic_days,
-            dailyCap:affiliateData.dailyCap ?? 50,
-        })
-
-        await this.trafficRepository.save(traffic)
-
         const user = await this.authService.registerUser({
             email: `${affiliateData.email}`,
             password: `${AFFILIATE_DEFAULT_PASSWORD}`,

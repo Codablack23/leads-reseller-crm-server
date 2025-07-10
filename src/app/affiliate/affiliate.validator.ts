@@ -23,16 +23,7 @@ export class AffiliateValidator{
     static addAffiliateSchema:ValidationChain[] = [
         body("email").escape()
         .isEmail().withMessage("Please provide a valid email"),
-        body("dailyCap").optional().escape()
-        .notEmpty().withMessage("Please add a daily cap for leads"),
         body("country")
-        .notEmpty().withMessage("Please provide a country for your affiliate"),
-        body("lead_opening_time")
-        .notEmpty().withMessage("Please provide a starting time for your traffic"),
-        body("lead_closing_time")
-        .notEmpty().withMessage("Please provide a closing time for traffic"),
-        body("traffic_days")
-        .notEmpty().withMessage("Please provide traffic days for your affiliate")
     ]
 
     static createAffiliateSchema:ValidationChain[] = [
