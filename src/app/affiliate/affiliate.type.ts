@@ -20,8 +20,8 @@ export interface TrafficRequestData {
     country:string,
     openingTime:string,
     closingTime:string,
-    trafficDays:string
-    brandId:string
+    trafficDays:string[]
+    brandId?:string
 }
 export interface TrafficUpdateRequestData {
     weight?: number;

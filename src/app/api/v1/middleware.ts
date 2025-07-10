@@ -20,7 +20,7 @@ export class ApiMiddleware {
             const expiresAt = existingApiKey.expiresAt
             const timeDifference = DateTime.fromJSDate(expiresAt).diffNow();
             if (timeDifference.milliseconds < 1) throw new BadRequest("Invalid API Key");
-            
+
             (req as any).apiKey = apiKey;
 
             next()

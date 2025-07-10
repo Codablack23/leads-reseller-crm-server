@@ -69,7 +69,7 @@ class LeadsAPIService {
                 if (!traffics.length)
                     throw new core_error_1.BadRequest("Country not allowed");
                 const valid = traffics.filter(t => this.validateTimeRange(t.openingTime, t.closingTime) &&
-                    this.validateTrafficDays(t.trafficDays.split(",")));
+                    this.validateTrafficDays(t.trafficDays));
                 if (!valid.length)
                     throw new core_error_1.BadRequest("Invalid time/day for leads");
                 const today = new Date().toISOString().split("T")[0];
@@ -118,16 +118,24 @@ class LeadsAPIService {
     getUserLeads(apiKey) {
         return __awaiter(this, void 0, void 0, function* () {
             const { affiliate, brand } = yield this.getAffiliateFromAPIKey(apiKey);
-            return this.leadRepository.find({
+            console.log({ affiliate, brand });
+            const affiliateLeads = yield this.leadRepository.find({
                 where: {
-                    traffic: Object.assign({}, (affiliate ? { affiliate } : { brand }))
-                },
+                    affiliate,
+                }
             });
+            const brandLeads = yield this.leadRepository.find({
+                where: {
+                    traffic: { brand }
+                }
+            });
+            if (affiliate)
+                return affiliateLeads;
+            if (brand)
+                return brandLeads;
+            return [];
         });
     }
-    /**
-     * Adds a lead and assigns it to eligible traffic if found.
-     */
     addLeadData(affiliate, leadData) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
@@ -140,20 +148,23 @@ class LeadsAPIService {
                 relations: { lead: true },
             });
             if (!traffics.length) {
-                return this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Affiliate has no traffic configured for the specified country" }));
+                yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Affiliate has no traffic configured for the specified country" }));
+                throw new core_error_1.BadRequest("Affiliate has no traffic configured for the specified country");
             }
             const valid = traffics.filter(t => this.validateTimeRange(t.openingTime, t.closingTime) &&
-                this.validateTrafficDays(t.trafficDays.split(",")));
+                this.validateTrafficDays(t.trafficDays));
             if (!valid.length) {
-                return this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Lead was submitted outside the traffic's active time or day" }));
+                yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Lead was submitted outside the traffic's active time or day" }));
+                throw new core_error_1.BadRequest("Lead was submitted outside the traffic's active time or day");
             }
             const assigned = new Map();
             for (const traffic of valid.sort((a, b) => b.priority - a.priority)) {
                 const todayCount = this.countTodayLeads(traffic, today);
                 if (todayCount >= traffic.dailyCap) {
-                    const rejected = yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Traffic has reached its daily lead limit" }));
-                    if (traffic.skipFallback)
-                        return rejected;
+                    yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Traffic has reached its daily lead limit" }));
+                    if (traffic.skipFallback) {
+                        throw new core_error_1.BadRequest("Traffic has reached its daily lead limit");
+                    }
                     continue;
                 }
                 const count = (_a = assigned.get(traffic.id)) !== null && _a !== void 0 ? _a : 0;
@@ -164,7 +175,9 @@ class LeadsAPIService {
                     affiliate,
                     language, lead_status: enums_1.LeadStatus.ACCEPTED }));
             }
-            return this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "No traffics available for lead assignment after checks" }));
+            // If no traffic was accepted after all checks
+            yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "No traffics available for lead assignment after checks" }));
+            throw new core_error_1.BadRequest("No traffics available for lead assignment after checks");
         });
     }
     /**
@@ -208,6 +221,48 @@ class LeadsAPIService {
                 affiliate: apiKeyRes === null || apiKeyRes === void 0 ? void 0 : apiKeyRes.affiliate,
                 brand: apiKeyRes === null || apiKeyRes === void 0 ? void 0 : apiKeyRes.brand,
             };
+        });
+    }
+    updateLeadStatus(apiKey, leadStatusRequestData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { affiliate } = yield this.getAffiliateFromAPIKey(apiKey);
+            yield Promise.all(leadStatusRequestData.lead_update.map((update) => {
+                return () => __awaiter(this, void 0, void 0, function* () {
+                    const lead = yield this.leadRepository.findOne({
+                        where: {
+                            affiliate,
+                            id: update.lead_id
+                        }
+                    });
+                    if (!lead) {
+                        throw new core_error_1.BadRequest("Lead does not exist");
+                    }
+                    lead.status = update.status;
+                    lead.call_status = update.call_status;
+                    yield this.leadRepository.save(lead);
+                });
+            }));
+        });
+    }
+    updateLeadFtdStatus(apiKey, leadStatusRequestData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { affiliate } = yield this.getAffiliateFromAPIKey(apiKey);
+            yield Promise.all(leadStatusRequestData.lead_update.map((update) => {
+                return () => __awaiter(this, void 0, void 0, function* () {
+                    const lead = yield this.leadRepository.findOne({
+                        where: {
+                            affiliate,
+                            id: update.lead_id
+                        }
+                    });
+                    if (!lead) {
+                        throw new core_error_1.BadRequest("Lead does not exist");
+                    }
+                    lead.is_ftd = true;
+                    lead.ftd_status = update.ftd_status;
+                    yield this.leadRepository.save(lead);
+                });
+            }));
         });
     }
 }

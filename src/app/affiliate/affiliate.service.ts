@@ -70,7 +70,7 @@ export class AffiliateService {
             openingTime:affiliateData.lead_opening_time,
             closingTime:affiliateData.lead_closing_time,
             affiliate:newAffiliate,
-            trafficDays:affiliateData.traffic_days.join(","),
+            trafficDays:affiliateData.traffic_days,
             dailyCap:affiliateData.dailyCap ?? 50,
         })
 
@@ -98,6 +98,20 @@ export class AffiliateService {
             brand:{
                 id:trafficData.brandId
             },
+            affiliate:{
+                id:affiliateId
+            }
+        })
+
+        const newTraffic = await this.trafficRepository.save(trafficInstance)
+        return newTraffic;
+    } 
+    async addAffliateApiTraffic(affiliateId:string,trafficData: TrafficRequestData) {
+
+        console.log({trafficData})
+
+        const trafficInstance = this.trafficRepository.create({
+            ...trafficData,
             affiliate:{
                 id:affiliateId
             }

@@ -28,3 +28,21 @@ export type SessionConfigBuilder=()=>SessionOptions
 export interface AppValidationError{
     [key:string]:string
 }
+
+export interface LeadStatusRequestData{
+    lead_update:[
+        {
+            lead_id:string,
+            call_status?:string,
+            status?:string,
+        }
+    ]
+}
+export interface LeadFtdStatusRequestData{
+    lead_update:[
+        {
+            lead_id:string,
+            ftd_status:string,
+        }
+    ]
+}

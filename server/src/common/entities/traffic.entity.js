@@ -50,8 +50,8 @@ __decorate([
     __metadata("design:type", String)
 ], TrafficEntity.prototype, "closingTime", void 0);
 __decorate([
-    (0, typeorm_1.Column)("text", { nullable: true }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)("json", { nullable: true }),
+    __metadata("design:type", Array)
 ], TrafficEntity.prototype, "trafficDays", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => lead_entity_1.LeadEntity, (lead) => lead.traffic, {

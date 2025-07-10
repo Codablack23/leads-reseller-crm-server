@@ -37,7 +37,25 @@ class LeadsAPIController {
                 next(error);
             }
         });
-        this.getLeadStatus = (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.updateLeadStatus = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const apiKey = req.query.apiKey;
+            try {
+                yield this.leadApiService.updateLeadStatus(apiKey, req.body);
+                service_response_1.default.sendOkResponse(res, {}, "Lead status updated successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+        this.updateFtdStatus = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const apiKey = req.query.apiKey;
+            try {
+                yield this.leadApiService.updateLeadFtdStatus(apiKey, req.body);
+                service_response_1.default.sendOkResponse(res, {}, "Lead ftd status updated successfully");
+            }
+            catch (error) {
+                next(error);
+            }
         });
     }
 }

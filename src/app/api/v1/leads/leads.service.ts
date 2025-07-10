@@ -9,6 +9,8 @@ import { BadRequest } from "@core/core.error";
 import countries from "@lib/data/countries.json";
 import { SanitizerProvider } from "@lib/utils";
 import { LeadStatus } from "@common/enums";
+import { LeadFtdStatusRequestData, LeadStatusRequestData } from "@interfaces/index";
+import AppResponse from "@common/services/service.response";
 
 /**
  * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
@@ -77,7 +79,7 @@ export class LeadsAPIService {
 
       const valid = traffics.filter(t =>
         this.validateTimeRange(t.openingTime, t.closingTime) &&
-        this.validateTrafficDays(t.trafficDays.split(","))
+        this.validateTrafficDays(t.trafficDays)
       );
 
       if (!valid.length) throw new BadRequest("Invalid time/day for leads");
@@ -140,22 +142,30 @@ export class LeadsAPIService {
   async getUserLeads(apiKey: string) {
     const { affiliate, brand } = await this.getAffiliateFromAPIKey(apiKey);
 
-    return this.leadRepository.find({
+
+    console.log({ affiliate, brand })
+
+    const affiliateLeads = await this.leadRepository.find({
       where: {
-        traffic: {
-          ...(affiliate ? { affiliate } : { brand })
-        }
-      },
+        affiliate,
+      }
+    })
+
+    const brandLeads = await this.leadRepository.find({
+      where: {
+        traffic: { brand }
+      }
     });
+
+    if (affiliate) return affiliateLeads;
+    if (brand) return brandLeads;
+
+    return []
+
   }
 
-  /**
-   * Adds a lead and assigns it to eligible traffic if found.
-   */
   async addLeadData(affiliate: AffiliateEntity, leadData: LeadRequestData) {
-
-    const affiliateId = affiliate.id
-
+    const affiliateId = affiliate.id;
     const country = this.parseCountry(leadData.country);
     const language = this.getCountryLanguage(leadData.country);
     const today = new Date().toISOString().split("T")[0];
@@ -166,26 +176,30 @@ export class LeadsAPIService {
     });
 
     if (!traffics.length) {
-      return this.saveAndSanitizeLead({
+      await this.saveAndSanitizeLead({
         ...leadData,
         affiliate,
         lead_status: LeadStatus.REJECTED,
         rejection_reason: "Affiliate has no traffic configured for the specified country",
       });
+
+      throw new BadRequest("Affiliate has no traffic configured for the specified country");
     }
 
     const valid = traffics.filter(t =>
       this.validateTimeRange(t.openingTime, t.closingTime) &&
-      this.validateTrafficDays(t.trafficDays.split(","))
+      this.validateTrafficDays(t.trafficDays)
     );
 
     if (!valid.length) {
-      return this.saveAndSanitizeLead({
+      await this.saveAndSanitizeLead({
         ...leadData,
         affiliate,
         lead_status: LeadStatus.REJECTED,
         rejection_reason: "Lead was submitted outside the traffic's active time or day",
       });
+
+      throw new BadRequest("Lead was submitted outside the traffic's active time or day");
     }
 
     const assigned = new Map<string, number>();
@@ -194,20 +208,21 @@ export class LeadsAPIService {
       const todayCount = this.countTodayLeads(traffic, today);
 
       if (todayCount >= traffic.dailyCap) {
-        const rejected = await this.saveAndSanitizeLead({
+        await this.saveAndSanitizeLead({
           ...leadData,
           affiliate,
           lead_status: LeadStatus.REJECTED,
           rejection_reason: "Traffic has reached its daily lead limit",
         });
 
-        if (traffic.skipFallback) return rejected;
+        if (traffic.skipFallback) {
+          throw new BadRequest("Traffic has reached its daily lead limit");
+        }
 
         continue;
       }
 
       const count = assigned.get(traffic.id) ?? 0;
-
       if (count >= traffic.weight) continue;
 
       assigned.set(traffic.id, count + 1);
@@ -221,13 +236,17 @@ export class LeadsAPIService {
       });
     }
 
-    return this.saveAndSanitizeLead({
+    // If no traffic was accepted after all checks
+    await this.saveAndSanitizeLead({
       ...leadData,
       affiliate,
       lead_status: LeadStatus.REJECTED,
       rejection_reason: "No traffics available for lead assignment after checks",
     });
+
+    throw new BadRequest("No traffics available for lead assignment after checks");
   }
+
 
   /**
    * Saves and sanitizes a lead object.
@@ -276,4 +295,59 @@ export class LeadsAPIService {
       brand: apiKeyRes?.brand,
     };
   }
+
+  async updateLeadStatus(apiKey: string, leadStatusRequestData: LeadStatusRequestData) {
+
+    const { affiliate } = await this.getAffiliateFromAPIKey(apiKey);
+
+    await Promise.all(leadStatusRequestData.lead_update.map((update) => {
+      return async () => {
+
+        const lead = await this.leadRepository.findOne({
+          where: {
+            affiliate,
+            id: update.lead_id
+          }
+        })
+
+        if (!lead) {
+          throw new BadRequest("Lead does not exist")
+        }
+
+        lead.status = update.status;
+        lead.call_status = update.call_status;
+        await this.leadRepository.save(lead);
+
+      }
+    }))
+
+  }
+  async updateLeadFtdStatus(apiKey: string, leadStatusRequestData: LeadFtdStatusRequestData) {
+
+    const { affiliate } = await this.getAffiliateFromAPIKey(apiKey);
+
+
+    await Promise.all(leadStatusRequestData.lead_update.map((update) => {
+      return async () => {
+
+        const lead = await this.leadRepository.findOne({
+          where: {
+            affiliate,
+            id: update.lead_id
+          }
+        })
+
+        if (!lead) {
+          throw new BadRequest("Lead does not exist")
+        }
+
+        lead.is_ftd = true;
+        lead.ftd_status = update.ftd_status;
+        await this.leadRepository.save(lead);
+
+      }
+    }))
+
+  }
+
 }

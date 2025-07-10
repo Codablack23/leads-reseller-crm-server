@@ -106,6 +106,26 @@ export class AffiliateValidator{
         .notEmpty().withMessage("Please provide skip fallback for your traffic")
 
     ]
+    static addTrafficSchema:ValidationChain[] = [
+        body("country")
+        .notEmpty().withMessage("Please provide a country for your affiliate"),
+        body("openingTime")
+        .notEmpty().withMessage("Please provide a starting time for your traffic"),
+        body("closingTime")
+        .notEmpty().withMessage("Please provide a closing time for traffic"),
+        body("trafficDays")
+        .notEmpty().withMessage("Please provide traffic days for your affiliate") ,
+        body("weight")
+        .notEmpty()
+        .withMessage("Please provide a weight for your traffic")
+        .isNumeric().withMessage("Weight should only contain numbers"),
+        body("priority")
+        .notEmpty().withMessage("Please priority for your traffic")
+        .isNumeric().withMessage("Priority should only contain numbers"),
+        body("dailyCap")
+        .notEmpty().withMessage("Please provide a daily cap for traffic")
+        .isNumeric().withMessage("Daily cap should only contain numbers"),
+    ]
     static updateTrafficSchema:ValidationChain[] = [
         param("id").custom(async(id:string)=>{
             const trafficExists = await trafficRepository.findOne({where:{id}})

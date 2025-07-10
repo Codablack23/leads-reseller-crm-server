@@ -16,25 +16,47 @@ const v1ApiRouter = Router()
 v1ApiRouter.get("/",function(req, res){
     res.json({status:"success",message:`Welcome to ${APP_NAME} API`})
 })
-v1ApiRouter.get("/leads",ApiMiddleware.validateApiKey,LeadsAPIController.getLeads)
-
-v1ApiRouter.post("/leads",
-    ApiMiddleware.validateApiKey,
-    useValidation(ApivValidations.addLeadValidation),
-    LeadsAPIController.addLead
-)
-
 // AFFILIATES API ENDPOINTS
 v1ApiRouter.post("/affiliates",
     useValidation(AffiliateValidator.addAffiliateSchema),
     useValidation(AuthValidator.registerAffiliateSchema),
     AffiliateAPIController.addAffiliate
+)// AFFILIATES API ENDPOINTS
+v1ApiRouter.get("/affiliates/traffic",
+    ApiMiddleware.validateApiKey,
+    AffiliateAPIController.getAffiliateTraffic
+),
+v1ApiRouter.post("/affiliates/traffic",
+    ApiMiddleware.validateApiKey,
+    useValidation(AffiliateValidator.addTrafficSchema),
+    AffiliateAPIController.addAffiliateTraffic
 )
 v1ApiRouter.post("/brands",
     useValidation(BrandValidator.createBrandSchema),
     useValidation(AuthValidator.registerBrandSchema),
     BrandAPIController.addBrand
 )
+
+v1ApiRouter.get("/leads",ApiMiddleware.validateApiKey,LeadsAPIController.getLeads)
+
+v1ApiRouter.post("/leads",
+    ApiMiddleware.validateApiKey,
+    useValidation(ApivValidations.addLeadValidation),
+    LeadsAPIController.addLead
+),
+
+v1ApiRouter.post("/leads/status",
+    ApiMiddleware.validateApiKey,
+    useValidation(ApivValidations.updateLeadStatusValidation),
+    LeadsAPIController.updateLeadStatus
+)
+
+v1ApiRouter.patch("/leads/ftd",
+    ApiMiddleware.validateApiKey,
+    useValidation(ApivValidations.updateLeadFtdStatusValidation),
+    LeadsAPIController.updateFtdStatus
+)
+
 
 
 export default v1ApiRouter

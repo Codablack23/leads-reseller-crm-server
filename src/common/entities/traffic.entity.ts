@@ -30,8 +30,8 @@ export class TrafficEntity {
     @Column("time")
     closingTime: string;
 
-    @Column("text", { nullable: true })
-    trafficDays: string;
+    @Column("json", { nullable: true })
+    trafficDays: string[];
 
     @OneToMany(() => LeadEntity, (lead) => lead.traffic, {
         cascade: false,

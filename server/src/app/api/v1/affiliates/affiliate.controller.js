@@ -26,6 +26,24 @@ class AffiliateAPIController {
                 next(error);
             }
         });
+        this.getAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const all_traffic = yield this.affiliateAPIService.getAffiliateTraffic(req.apiKey);
+                service_response_1.default.sendOkResponse(res, { all_traffic }, "Affiliate Traffic retrieved successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+        this.addAffiliateTraffic = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const traffic = yield this.affiliateAPIService.addAffiliateTraffic(req.apiKey, req.body);
+                service_response_1.default.sendOkResponse(res, { traffic }, "Affiliate Traffic added successfully");
+            }
+            catch (error) {
+                next(error);
+            }
+        });
         this.getLeadStatus = (req, res) => __awaiter(this, void 0, void 0, function* () {
         });
     }

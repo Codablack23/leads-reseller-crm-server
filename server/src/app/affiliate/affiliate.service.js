@@ -84,7 +84,7 @@ class AffiliateService {
                 openingTime: affiliateData.lead_opening_time,
                 closingTime: affiliateData.lead_closing_time,
                 affiliate: newAffiliate,
-                trafficDays: affiliateData.traffic_days.join(","),
+                trafficDays: affiliateData.traffic_days,
                 dailyCap: (_a = affiliateData.dailyCap) !== null && _a !== void 0 ? _a : 50,
             });
             yield this.trafficRepository.save(traffic);
@@ -104,6 +104,16 @@ class AffiliateService {
             const trafficInstance = this.trafficRepository.create(Object.assign(Object.assign({}, trafficData), { brand: {
                     id: trafficData.brandId
                 }, affiliate: {
+                    id: affiliateId
+                } }));
+            const newTraffic = yield this.trafficRepository.save(trafficInstance);
+            return newTraffic;
+        });
+    }
+    addAffliateApiTraffic(affiliateId, trafficData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log({ trafficData });
+            const trafficInstance = this.trafficRepository.create(Object.assign(Object.assign({}, trafficData), { affiliate: {
                     id: affiliateId
                 } }));
             const newTraffic = yield this.trafficRepository.save(trafficInstance);

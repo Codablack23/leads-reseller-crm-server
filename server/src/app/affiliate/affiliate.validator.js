@@ -114,6 +114,26 @@ AffiliateValidator.createTrafficSchema = [
     (0, express_validator_1.body)("skipFallback")
         .notEmpty().withMessage("Please provide skip fallback for your traffic")
 ];
+AffiliateValidator.addTrafficSchema = [
+    (0, express_validator_1.body)("country")
+        .notEmpty().withMessage("Please provide a country for your affiliate"),
+    (0, express_validator_1.body)("openingTime")
+        .notEmpty().withMessage("Please provide a starting time for your traffic"),
+    (0, express_validator_1.body)("closingTime")
+        .notEmpty().withMessage("Please provide a closing time for traffic"),
+    (0, express_validator_1.body)("trafficDays")
+        .notEmpty().withMessage("Please provide traffic days for your affiliate"),
+    (0, express_validator_1.body)("weight")
+        .notEmpty()
+        .withMessage("Please provide a weight for your traffic")
+        .isNumeric().withMessage("Weight should only contain numbers"),
+    (0, express_validator_1.body)("priority")
+        .notEmpty().withMessage("Please priority for your traffic")
+        .isNumeric().withMessage("Priority should only contain numbers"),
+    (0, express_validator_1.body)("dailyCap")
+        .notEmpty().withMessage("Please provide a daily cap for traffic")
+        .isNumeric().withMessage("Daily cap should only contain numbers"),
+];
 AffiliateValidator.updateTrafficSchema = [
     (0, express_validator_1.param)("id").custom((id) => __awaiter(void 0, void 0, void 0, function* () {
         const trafficExists = yield trafficRepository.findOne({ where: { id } });

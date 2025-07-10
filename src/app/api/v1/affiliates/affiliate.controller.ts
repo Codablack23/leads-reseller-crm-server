@@ -14,6 +14,22 @@ class AffiliateAPIController{
             next(error)
         }
     }
+    getAffiliateTraffic:RequestHandler = async(req,res,next)=>{
+        try {
+            const all_traffic = await this.affiliateAPIService.getAffiliateTraffic((req as any).apiKey)
+            AppResponse.sendOkResponse(res, {all_traffic},"Affiliate Traffic retrieved successfully")
+        } catch (error) {
+            next(error)
+        }
+    }
+    addAffiliateTraffic:RequestHandler = async(req,res,next)=>{
+        try {
+            const traffic = await this.affiliateAPIService.addAffiliateTraffic((req as any).apiKey,req.body)
+            AppResponse.sendOkResponse(res, {traffic},"Affiliate Traffic added successfully")
+        } catch (error) {
+            next(error)
+        }
+    }
     getLeadStatus:RequestHandler = async(req,res)=>{
 
     }
