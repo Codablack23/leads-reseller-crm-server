@@ -64,5 +64,10 @@ export class ApivValidations {
     body("lead_update.*.ftd_status")
       .notEmpty()
       .withMessage("Each item in lead_update must include ftd_status"),
+    body("lead_update.*.ftd_date")
+      .notEmpty()
+      .withMessage("Each item in lead_update must include ftd_date")
+      .isISO8601().withMessage("Please provide an ISO8601 date Eg 2022-09-07")
+      ,
   ];
 }

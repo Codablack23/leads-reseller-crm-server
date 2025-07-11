@@ -43,6 +43,7 @@ export interface LeadFtdStatusRequestData{
         {
             lead_id:string,
             ftd_status:string,
+            ftd_date:string,
         }
     ]
 }

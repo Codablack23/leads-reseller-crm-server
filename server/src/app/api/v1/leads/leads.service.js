@@ -260,6 +260,7 @@ class LeadsAPIService {
                     }
                     lead.is_ftd = true;
                     lead.ftd_status = update.ftd_status;
+                    lead.ftd_date = update.ftd_date;
                     yield this.leadRepository.save(lead);
                 });
             }));
