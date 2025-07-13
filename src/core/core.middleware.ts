@@ -51,6 +51,9 @@ const getSessionConfig:SessionConfigBuilder = ()=>{
 }
 
 export const useError:ErrorRequestHandler = (err:Error,req,res,next)=>{
+
+    console.log(err)
+
     if(err instanceof BadRequest){
         AppLogger.logError(err.httpCode,err.message);
         return AppResponse.sendFailedResponse(res,err.status,err.errors,err.message)

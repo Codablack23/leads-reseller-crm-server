@@ -11,6 +11,7 @@ import { SanitizerProvider } from "@lib/utils";
 import { LeadStatus } from "@common/enums";
 import { LeadFtdStatusRequestData, LeadStatusRequestData } from "@interfaces/index";
 import AppResponse from "@common/services/service.response";
+import { In } from "typeorm";
 
 /**
  * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
@@ -27,16 +28,33 @@ export class LeadsAPIService {
   parseCountry(country: string): string {
     const trimmedInput = country.trim().toLowerCase();
 
-    const match = countries.find(({ name, cca2, cca3 }) =>
-      [name?.common, name?.official, cca2, cca3].some(part =>
-        part?.toLowerCase() === trimmedInput
-      )
-    );
+    const match = countries.find(({ name, cca2, cca3, altSpellings }) => {
+      const lowerAltSpellings = Array.isArray(altSpellings)
+        ? altSpellings.map(s => s.toLowerCase())
+        : [];
 
-    if (!match) throw new BadRequest("Invalid country name");
+      // Combine all comparison candidates safely
+      const candidates: string[] = [
+        name?.common,
+        name?.official,
+        cca2,
+        cca3,
+        ...lowerAltSpellings
+      ]
+        .filter(Boolean) // remove undefined/null
+        .map(value => value.toLowerCase());
+
+      return candidates.includes(trimmedInput);
+    });
+
+    if (!match) {
+      console.error(`Could not match country: "${country}"`);
+      throw new BadRequest("Invalid country name");
+    }
 
     return `${match.cca3}-${match.name.common}`;
   }
+
 
   /**
    * Gets the primary non-English language of a country.
@@ -45,20 +63,38 @@ export class LeadsAPIService {
   getCountryLanguage(country: string): string {
     const input = country.trim().toLowerCase();
 
-    const matched = countries.find(({ name, cca2, cca3 }) =>
-      [name?.common, name?.official, cca2, cca3].some(part =>
-        part?.toLowerCase() === input
-      )
-    );
+    const matched = countries.find(({ name, cca2, cca3, altSpellings }) => {
+      const altSpellingList = Array.isArray(altSpellings)
+        ? altSpellings.map(spelling => spelling.toLowerCase())
+        : [];
 
-    if (!matched) throw new BadRequest("Invalid country name");
+      const candidates = [
+        name?.common,
+        name?.official,
+        cca2,
+        cca3,
+        ...altSpellingList
+      ]
+        .filter(Boolean)
+        .map(value => value.toLowerCase());
 
-    const nonEnglish = Object.keys(matched.languages || {}).filter(
-      lang => lang !== "eng"
-    );
+      return candidates.includes(input);
+    });
+
+    if (!matched) {
+      console.error(`Language match failed for input: "${country}"`);
+      throw new BadRequest("Invalid country name");
+    }
+
+    const languageKeys = matched.languages
+      ? Object.keys(matched.languages)
+      : [];
+
+    const nonEnglish = languageKeys.filter(lang => lang !== "eng");
 
     return nonEnglish[0] || "eng";
   }
+
 
   /**
    * Retrieves the most eligible traffic for an affiliate within a country.
@@ -133,7 +169,7 @@ export class LeadsAPIService {
   validateTrafficDays(days: string[]): boolean {
     const today = DateTime.now().toFormat("cccc").toLowerCase();
 
-    return days.some(day => day.trim().toLowerCase() === today);
+    return days ? days.some(day => day.trim().toLowerCase() === today) : true;
   }
 
   /**
@@ -166,16 +202,24 @@ export class LeadsAPIService {
 
   async addLeadData(affiliate: AffiliateEntity, leadData: LeadRequestData) {
     const affiliateId = affiliate.id;
+
     const country = this.parseCountry(leadData.country);
     const language = this.getCountryLanguage(leadData.country);
     const today = new Date().toISOString().split("T")[0];
 
+    console.log({ leadData, country })
+
     const traffics = await this.trafficRepository.find({
-      where: { country, affiliate: { id: affiliateId } },
+      where: {
+        country: In([country, leadData.country]),
+        affiliate: { id: affiliateId }
+      },
       relations: { lead: true },
     });
 
-    if (!traffics.length) {
+    console.log({ traffics })
+
+    if (traffics.length == 0) {
       await this.saveAndSanitizeLead({
         ...leadData,
         affiliate,
