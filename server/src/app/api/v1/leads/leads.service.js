@@ -22,6 +22,7 @@ const core_error_1 = require("../../../../core/core.error");
 const countries_json_1 = __importDefault(require("../../../../lib/data/countries.json"));
 const utils_1 = require("../../../../lib/utils");
 const enums_1 = require("../../../../common/enums");
+const typeorm_1 = require("typeorm");
 /**
  * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
  */
@@ -37,9 +38,26 @@ class LeadsAPIService {
      */
     parseCountry(country) {
         const trimmedInput = country.trim().toLowerCase();
-        const match = countries_json_1.default.find(({ name, cca2, cca3 }) => [name === null || name === void 0 ? void 0 : name.common, name === null || name === void 0 ? void 0 : name.official, cca2, cca3].some(part => (part === null || part === void 0 ? void 0 : part.toLowerCase()) === trimmedInput));
-        if (!match)
+        const match = countries_json_1.default.find(({ name, cca2, cca3, altSpellings }) => {
+            const lowerAltSpellings = Array.isArray(altSpellings)
+                ? altSpellings.map(s => s.toLowerCase())
+                : [];
+            // Combine all comparison candidates safely
+            const candidates = [
+                name === null || name === void 0 ? void 0 : name.common,
+                name === null || name === void 0 ? void 0 : name.official,
+                cca2,
+                cca3,
+                ...lowerAltSpellings
+            ]
+                .filter(Boolean) // remove undefined/null
+                .map(value => value.toLowerCase());
+            return candidates.includes(trimmedInput);
+        });
+        if (!match) {
+            console.error(`Could not match country: "${country}"`);
             throw new core_error_1.BadRequest("Invalid country name");
+        }
         return `${match.cca3}-${match.name.common}`;
     }
     /**
@@ -48,10 +66,29 @@ class LeadsAPIService {
      */
     getCountryLanguage(country) {
         const input = country.trim().toLowerCase();
-        const matched = countries_json_1.default.find(({ name, cca2, cca3 }) => [name === null || name === void 0 ? void 0 : name.common, name === null || name === void 0 ? void 0 : name.official, cca2, cca3].some(part => (part === null || part === void 0 ? void 0 : part.toLowerCase()) === input));
-        if (!matched)
+        const matched = countries_json_1.default.find(({ name, cca2, cca3, altSpellings }) => {
+            const altSpellingList = Array.isArray(altSpellings)
+                ? altSpellings.map(spelling => spelling.toLowerCase())
+                : [];
+            const candidates = [
+                name === null || name === void 0 ? void 0 : name.common,
+                name === null || name === void 0 ? void 0 : name.official,
+                cca2,
+                cca3,
+                ...altSpellingList
+            ]
+                .filter(Boolean)
+                .map(value => value.toLowerCase());
+            return candidates.includes(input);
+        });
+        if (!matched) {
+            console.error(`Language match failed for input: "${country}"`);
             throw new core_error_1.BadRequest("Invalid country name");
-        const nonEnglish = Object.keys(matched.languages || {}).filter(lang => lang !== "eng");
+        }
+        const languageKeys = matched.languages
+            ? Object.keys(matched.languages)
+            : [];
+        const nonEnglish = languageKeys.filter(lang => lang !== "eng");
         return nonEnglish[0] || "eng";
     }
     /**
@@ -110,7 +147,7 @@ class LeadsAPIService {
      */
     validateTrafficDays(days) {
         const today = luxon_1.DateTime.now().toFormat("cccc").toLowerCase();
-        return days.some(day => day.trim().toLowerCase() === today);
+        return days ? days.some(day => day.trim().toLowerCase() === today) : true;
     }
     /**
      * Fetches leads for an affiliate or brand using their API key.
@@ -143,11 +180,16 @@ class LeadsAPIService {
             const country = this.parseCountry(leadData.country);
             const language = this.getCountryLanguage(leadData.country);
             const today = new Date().toISOString().split("T")[0];
+            console.log({ leadData, country });
             const traffics = yield this.trafficRepository.find({
-                where: { country, affiliate: { id: affiliateId } },
+                where: {
+                    country: (0, typeorm_1.In)([country, leadData.country]),
+                    affiliate: { id: affiliateId }
+                },
                 relations: { lead: true },
             });
-            if (!traffics.length) {
+            console.log({ traffics });
+            if (traffics.length == 0) {
                 yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Affiliate has no traffic configured for the specified country" }));
                 throw new core_error_1.BadRequest("Affiliate has no traffic configured for the specified country");
             }

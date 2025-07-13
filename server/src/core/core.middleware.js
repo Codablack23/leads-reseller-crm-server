@@ -47,6 +47,7 @@ const getSessionConfig = () => {
     });
 };
 const useError = (err, req, res, next) => {
+    console.log(err);
     if (err instanceof core_error_1.BadRequest) {
         core_logger_1.default.logError(err.httpCode, err.message);
         return service_response_1.default.sendFailedResponse(res, err.status, err.errors, err.message);
