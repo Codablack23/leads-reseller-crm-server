@@ -35,6 +35,11 @@ export interface Pagination {
 export interface FtdQuery {
     is_ftd?:boolean
 }
+export interface LeadQuery {
+    is_ftd?:boolean,
+    start_date?:Date,
+    end_date?:Date,
+}
 
 export type QueryRequest<T = DefaultQuery> = Request<{}, any, any, T>
 export type QueryCleanerHandler<T> = (queryReq: QueryRequest<T>) => T

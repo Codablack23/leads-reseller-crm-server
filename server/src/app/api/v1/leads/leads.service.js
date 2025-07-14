@@ -23,6 +23,7 @@ const countries_json_1 = __importDefault(require("../../../../lib/data/countries
 const utils_1 = require("../../../../lib/utils");
 const enums_1 = require("../../../../common/enums");
 const typeorm_1 = require("typeorm");
+const typeorm_2 = require("typeorm");
 /**
  * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
  */
@@ -152,25 +153,68 @@ class LeadsAPIService {
     /**
      * Fetches leads for an affiliate or brand using their API key.
      */
-    getUserLeads(apiKey) {
+    getUserLeads(apiKey, leadQuery, pagination) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             const { affiliate, brand } = yield this.getAffiliateFromAPIKey(apiKey);
+            const query = {};
+            if (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.is_ftd) {
+                query.is_ftd = true;
+            }
+            const startDate = (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.start_date) ? new Date(leadQuery.start_date) : null;
+            const endDate = (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.end_date) ? new Date(leadQuery.end_date) : null;
+            const isValidStart = startDate && !isNaN(startDate.getTime());
+            const isValidEnd = endDate && !isNaN(endDate.getTime());
+            if (isValidStart && isValidEnd) {
+                query.createdAt = (0, typeorm_2.Between)(startDate, endDate);
+            }
+            else if (isValidStart) {
+                query.createdAt = (0, typeorm_2.MoreThanOrEqual)(startDate);
+            }
+            else if (isValidEnd) {
+                query.createdAt = (0, typeorm_2.LessThanOrEqual)(endDate);
+            }
+            const limit = (_a = pagination === null || pagination === void 0 ? void 0 : pagination.limit) !== null && _a !== void 0 ? _a : 10;
+            const page = (_b = pagination === null || pagination === void 0 ? void 0 : pagination.page) !== null && _b !== void 0 ? _b : 1;
+            const offset = (page - 1) * limit;
             console.log({ affiliate, brand });
-            const affiliateLeads = yield this.leadRepository.find({
-                where: {
-                    affiliate,
-                }
-            });
-            const brandLeads = yield this.leadRepository.find({
-                where: {
-                    traffic: { brand }
-                }
-            });
-            if (affiliate)
-                return affiliateLeads;
-            if (brand)
-                return brandLeads;
-            return [];
+            if (affiliate) {
+                const [affiliateLeads, total] = yield this.leadRepository.findAndCount({
+                    where: Object.assign({ affiliate: {
+                            id: affiliate.id
+                        } }, query),
+                    take: limit,
+                    skip: offset,
+                    order: { createdAt: 'DESC' },
+                });
+                const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(total, limit, page);
+                return {
+                    leads: affiliateLeads,
+                    pagination: paginationMeta,
+                };
+            }
+            if (brand) {
+                const [brandLeads, total] = yield this.leadRepository.findAndCount({
+                    where: Object.assign({ traffic: {
+                            brand: {
+                                id: brand.id
+                            }
+                        } }, query),
+                    take: limit,
+                    skip: offset,
+                    order: { createdAt: 'DESC' },
+                });
+                const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(total, limit, page);
+                return {
+                    leads: brandLeads,
+                    pagination: paginationMeta,
+                };
+            }
+            const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(0, limit, page);
+            return {
+                leads: [],
+                pagination: paginationMeta,
+            };
         });
     }
     addLeadData(affiliate, leadData) {
@@ -181,25 +225,30 @@ class LeadsAPIService {
             const language = this.getCountryLanguage(leadData.country);
             const today = new Date().toISOString().split("T")[0];
             console.log({ leadData, country });
+            // 1. Find traffics configured for this affiliate and country
             const traffics = yield this.trafficRepository.find({
                 where: {
                     country: (0, typeorm_1.In)([country, leadData.country]),
-                    affiliate: { id: affiliateId }
+                    affiliate: { id: affiliateId },
                 },
-                relations: { lead: true },
+                relations: { lead: true, brand: true },
             });
             console.log({ traffics });
-            if (traffics.length == 0) {
+            // 2. No configured traffics
+            if (traffics.length === 0) {
                 yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Affiliate has no traffic configured for the specified country" }));
                 throw new core_error_1.BadRequest("Affiliate has no traffic configured for the specified country");
             }
-            const valid = traffics.filter(t => this.validateTimeRange(t.openingTime, t.closingTime) &&
+            // 3. Filter valid traffics by time/day
+            const valid = traffics.filter((t) => this.validateTimeRange(t.openingTime, t.closingTime) &&
                 this.validateTrafficDays(t.trafficDays));
+            // 4. No traffic open at this time/day
             if (!valid.length) {
                 yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "Lead was submitted outside the traffic's active time or day" }));
                 throw new core_error_1.BadRequest("Lead was submitted outside the traffic's active time or day");
             }
             const assigned = new Map();
+            // 5. Assign from valid traffics
             for (const traffic of valid.sort((a, b) => b.priority - a.priority)) {
                 const todayCount = this.countTodayLeads(traffic, today);
                 if (todayCount >= traffic.dailyCap) {
@@ -209,15 +258,65 @@ class LeadsAPIService {
                     }
                     continue;
                 }
+                // 6. Duplicate check — per traffic using email/phone/full combo
+                const duplicateLead = yield this.leadRepository.findOne({
+                    where: [
+                        {
+                            traffic: { id: traffic.id },
+                            email: leadData.email,
+                            firstname: leadData.firstname,
+                            lastname: leadData.lastname,
+                            phone: leadData.phone,
+                        },
+                        {
+                            traffic: { id: traffic.id },
+                            email: leadData.email,
+                            phone: leadData.phone,
+                        },
+                        {
+                            traffic: { id: traffic.id },
+                            email: leadData.email,
+                        },
+                        {
+                            traffic: { id: traffic.id },
+                            phone: leadData.phone,
+                        },
+                    ],
+                    relations: { traffic: true },
+                });
+                if (duplicateLead) {
+                    let reason = "Duplicate lead for this traffic: ";
+                    const isFullMatch = duplicateLead.email === leadData.email &&
+                        duplicateLead.firstname === leadData.firstname &&
+                        duplicateLead.lastname === leadData.lastname &&
+                        duplicateLead.phone === leadData.phone;
+                    if (isFullMatch) {
+                        reason += "same full name, email, and phone already exist";
+                    }
+                    else if (duplicateLead.email === leadData.email &&
+                        duplicateLead.phone === leadData.phone) {
+                        reason += "same email and phone already exist";
+                    }
+                    else if (duplicateLead.email === leadData.email) {
+                        reason += "same email already exists";
+                    }
+                    else {
+                        reason += "same phone already exists";
+                    }
+                    // ❌ Do NOT save duplicate — just throw
+                    throw new core_error_1.BadRequest(reason);
+                }
+                // 7. Respect traffic weight
                 const count = (_a = assigned.get(traffic.id)) !== null && _a !== void 0 ? _a : 0;
                 if (count >= traffic.weight)
                     continue;
                 assigned.set(traffic.id, count + 1);
+                // 8. ✅ Save accepted lead
                 return this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { traffic,
                     affiliate,
                     language, lead_status: enums_1.LeadStatus.ACCEPTED }));
             }
-            // If no traffic was accepted after all checks
+            // 9. No valid traffic was able to accept the lead
             yield this.saveAndSanitizeLead(Object.assign(Object.assign({}, leadData), { affiliate, lead_status: enums_1.LeadStatus.REJECTED, rejection_reason: "No traffics available for lead assignment after checks" }));
             throw new core_error_1.BadRequest("No traffics available for lead assignment after checks");
         });

@@ -14,14 +14,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const leads_service_1 = require("./leads.service");
 const service_response_1 = __importDefault(require("../../../../common/services/service.response"));
+const providers_1 = require("../../../../common/providers");
 class LeadsAPIController {
     constructor(leadApiService) {
         this.leadApiService = leadApiService;
         this.getLeads = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const apiKey = req.query.apiKey;
-                const leads = yield this.leadApiService.getUserLeads(apiKey);
-                service_response_1.default.sendOkResponse(res, { leads }, "Leads fetched successfully");
+                const leadQuery = providers_1.QueryProvider.extractQuery(req);
+                const paginatedQuery = providers_1.QueryProvider.usePagination(req);
+                const data = yield this.leadApiService.getUserLeads(apiKey, leadQuery, paginatedQuery);
+                service_response_1.default.sendOkResponse(res, data, "Leads fetched successfully");
             }
             catch (error) {
                 next(error);

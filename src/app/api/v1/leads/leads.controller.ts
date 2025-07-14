@@ -1,14 +1,18 @@
 import { RequestHandler } from "express";
 import { LeadsAPIService } from "./leads.service";
 import AppResponse from "@common/services/service.response";
+import { QueryProvider } from "@common/providers";
+import { LeadQuery } from "src/types";
 
 class LeadsAPIController {
     constructor(private leadApiService: LeadsAPIService) { }
     getLeads: RequestHandler = async (req, res, next) => {
         try {
             const apiKey = req.query.apiKey
-            const leads = await this.leadApiService.getUserLeads(apiKey as string)
-            AppResponse.sendOkResponse(res, { leads }, "Leads fetched successfully")
+            const leadQuery = QueryProvider.extractQuery<LeadQuery>(req)
+            const paginatedQuery = QueryProvider.usePagination(req)
+            const data = await this.leadApiService.getUserLeads(apiKey as string,leadQuery,paginatedQuery)
+            AppResponse.sendOkResponse(res, data, "Leads fetched successfully")
         } catch (error) {
             next(error)
         }

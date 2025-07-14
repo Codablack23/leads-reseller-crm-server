@@ -7,11 +7,12 @@ import { LeadEntity } from "@common/entities/lead.entity";
 import { DateTime } from "luxon";
 import { BadRequest } from "@core/core.error";
 import countries from "@lib/data/countries.json";
-import { SanitizerProvider } from "@lib/utils";
+import { PaginationUtility, SanitizerProvider } from "@lib/utils";
 import { LeadStatus } from "@common/enums";
 import { LeadFtdStatusRequestData, LeadStatusRequestData } from "@interfaces/index";
-import AppResponse from "@common/services/service.response";
 import { In } from "typeorm";
+import { Pagination, LeadQuery } from "src/types";
+import { Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 
 /**
  * LeadsAPIService handles lead validation, assignment, and affiliate tracking.
@@ -175,30 +176,88 @@ export class LeadsAPIService {
   /**
    * Fetches leads for an affiliate or brand using their API key.
    */
-  async getUserLeads(apiKey: string) {
+
+  async getUserLeads(apiKey: string, leadQuery?: LeadQuery, pagination?: Pagination) {
     const { affiliate, brand } = await this.getAffiliateFromAPIKey(apiKey);
 
+    const query: Record<string, any> = {};
 
-    console.log({ affiliate, brand })
+    if (leadQuery?.is_ftd) {
+      query.is_ftd = true;
+    }
 
-    const affiliateLeads = await this.leadRepository.find({
-      where: {
-        affiliate,
-      }
-    })
+    const startDate = leadQuery?.start_date ? new Date(leadQuery.start_date) : null;
+    const endDate = leadQuery?.end_date ? new Date(leadQuery.end_date) : null;
 
-    const brandLeads = await this.leadRepository.find({
-      where: {
-        traffic: { brand }
-      }
-    });
+    const isValidStart = startDate && !isNaN(startDate.getTime());
+    const isValidEnd = endDate && !isNaN(endDate.getTime());
 
-    if (affiliate) return affiliateLeads;
-    if (brand) return brandLeads;
+    if (isValidStart && isValidEnd) {
+      query.createdAt = Between(startDate, endDate);
+    } else if (isValidStart) {
+      query.createdAt = MoreThanOrEqual(startDate);
+    } else if (isValidEnd) {
+      query.createdAt = LessThanOrEqual(endDate);
+    }
 
-    return []
+    const limit = pagination?.limit ?? 10;
+    const page = pagination?.page ?? 1;
+    const offset = (page - 1) * limit;
 
+    console.log({ affiliate, brand });
+
+    if (affiliate) {
+      const [affiliateLeads, total] = await this.leadRepository.findAndCount({
+        where: {
+          affiliate:{
+            id:affiliate.id
+          },
+          ...query,
+        },
+        take: limit,
+        skip: offset,
+        order: { createdAt: 'DESC' },
+      });
+
+      const paginationMeta = PaginationUtility.getPaginationMetaData(total, limit, page);
+
+      return {
+        leads: affiliateLeads,
+        pagination: paginationMeta,
+      };
+    }
+
+    if (brand) {
+      const [brandLeads, total] = await this.leadRepository.findAndCount({
+        where: {
+          traffic: {
+            brand:{
+              id:brand.id
+            }
+          },
+          ...query,
+        },
+        take: limit,
+        skip: offset,
+        order: { createdAt: 'DESC' },
+      });
+
+      const paginationMeta = PaginationUtility.getPaginationMetaData(total, limit, page);
+
+      return {
+        leads: brandLeads,
+        pagination: paginationMeta,
+      };
+    }
+
+    const paginationMeta = PaginationUtility.getPaginationMetaData(0, limit, page);
+
+    return {
+      leads: [],
+      pagination: paginationMeta,
+    };
   }
+
 
   async addLeadData(affiliate: AffiliateEntity, leadData: LeadRequestData) {
     const affiliateId = affiliate.id;
@@ -207,19 +266,21 @@ export class LeadsAPIService {
     const language = this.getCountryLanguage(leadData.country);
     const today = new Date().toISOString().split("T")[0];
 
-    console.log({ leadData, country })
+    console.log({ leadData, country });
 
+    // 1. Find traffics configured for this affiliate and country
     const traffics = await this.trafficRepository.find({
       where: {
         country: In([country, leadData.country]),
-        affiliate: { id: affiliateId }
+        affiliate: { id: affiliateId },
       },
-      relations: { lead: true },
+      relations: { lead: true, brand: true },
     });
 
-    console.log({ traffics })
+    console.log({ traffics });
 
-    if (traffics.length == 0) {
+    // 2. No configured traffics
+    if (traffics.length === 0) {
       await this.saveAndSanitizeLead({
         ...leadData,
         affiliate,
@@ -230,11 +291,14 @@ export class LeadsAPIService {
       throw new BadRequest("Affiliate has no traffic configured for the specified country");
     }
 
-    const valid = traffics.filter(t =>
-      this.validateTimeRange(t.openingTime, t.closingTime) &&
-      this.validateTrafficDays(t.trafficDays)
+    // 3. Filter valid traffics by time/day
+    const valid = traffics.filter(
+      (t) =>
+        this.validateTimeRange(t.openingTime, t.closingTime) &&
+        this.validateTrafficDays(t.trafficDays),
     );
 
+    // 4. No traffic open at this time/day
     if (!valid.length) {
       await this.saveAndSanitizeLead({
         ...leadData,
@@ -248,6 +312,7 @@ export class LeadsAPIService {
 
     const assigned = new Map<string, number>();
 
+    // 5. Assign from valid traffics
     for (const traffic of valid.sort((a, b) => b.priority - a.priority)) {
       const todayCount = this.countTodayLeads(traffic, today);
 
@@ -266,11 +331,66 @@ export class LeadsAPIService {
         continue;
       }
 
+      // 6. Duplicate check — per traffic using email/phone/full combo
+      const duplicateLead = await this.leadRepository.findOne({
+        where: [
+          {
+            traffic: { id: traffic.id },
+            email: leadData.email,
+            firstname: leadData.firstname,
+            lastname: leadData.lastname,
+            phone: leadData.phone,
+          },
+          {
+            traffic: { id: traffic.id },
+            email: leadData.email,
+            phone: leadData.phone,
+          },
+          {
+            traffic: { id: traffic.id },
+            email: leadData.email,
+          },
+          {
+            traffic: { id: traffic.id },
+            phone: leadData.phone,
+          },
+        ],
+        relations: { traffic: true },
+      });
+
+      if (duplicateLead) {
+        let reason = "Duplicate lead for this traffic: ";
+
+        const isFullMatch =
+          duplicateLead.email === leadData.email &&
+          duplicateLead.firstname === leadData.firstname &&
+          duplicateLead.lastname === leadData.lastname &&
+          duplicateLead.phone === leadData.phone;
+
+        if (isFullMatch) {
+          reason += "same full name, email, and phone already exist";
+        } else if (
+          duplicateLead.email === leadData.email &&
+          duplicateLead.phone === leadData.phone
+        ) {
+          reason += "same email and phone already exist";
+        } else if (duplicateLead.email === leadData.email) {
+          reason += "same email already exists";
+        } else {
+          reason += "same phone already exists";
+        }
+
+        // ❌ Do NOT save duplicate — just throw
+        throw new BadRequest(reason);
+      }
+
+      // 7. Respect traffic weight
       const count = assigned.get(traffic.id) ?? 0;
       if (count >= traffic.weight) continue;
 
       assigned.set(traffic.id, count + 1);
 
+      // 8. ✅ Save accepted lead
       return this.saveAndSanitizeLead({
         ...leadData,
         traffic,
@@ -280,7 +400,7 @@ export class LeadsAPIService {
       });
     }
 
-    // If no traffic was accepted after all checks
+    // 9. No valid traffic was able to accept the lead
     await this.saveAndSanitizeLead({
       ...leadData,
       affiliate,
@@ -290,6 +410,8 @@ export class LeadsAPIService {
 
     throw new BadRequest("No traffics available for lead assignment after checks");
   }
+
+
 
 
   /**
