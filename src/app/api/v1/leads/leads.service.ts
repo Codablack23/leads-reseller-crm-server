@@ -177,15 +177,41 @@ export class LeadsAPIService {
    * Fetches leads for an affiliate or brand using their API key.
    */
 
+
   async getUserLeads(apiKey: string, leadQuery?: LeadQuery, pagination?: Pagination) {
     const { affiliate, brand } = await this.getAffiliateFromAPIKey(apiKey);
 
     const query: Record<string, any> = {};
 
+    // Handle is_ftd boolean
     if (leadQuery?.is_ftd) {
       query.is_ftd = true;
     }
 
+    // Handle comma-separated or single value for call_status
+    if (leadQuery?.call_status) {
+      if (typeof leadQuery.call_status === 'string' && leadQuery.call_status.includes(',')) {
+        query.call_status = In(leadQuery.call_status.split(',').map(s => s.trim()));
+      } else {
+        query.call_status = leadQuery.call_status;
+      }
+    }
+
+    // Handle email filter
+    if (leadQuery?.email) {
+      query.email = leadQuery.email;
+    }
+
+    // Handle comma-separated or single value for ftd_status
+    if (leadQuery?.ftd_status) {
+      if (typeof leadQuery.ftd_status === 'string' && leadQuery.ftd_status.includes(',')) {
+        query.ftd_status = In(leadQuery.ftd_status.split(',').map(s => s.trim()));
+      } else {
+        query.ftd_status = leadQuery.ftd_status;
+      }
+    }
+
+    // Handle date range
     const startDate = leadQuery?.start_date ? new Date(leadQuery.start_date) : null;
     const endDate = leadQuery?.end_date ? new Date(leadQuery.end_date) : null;
 
@@ -200,18 +226,16 @@ export class LeadsAPIService {
       query.createdAt = LessThanOrEqual(endDate);
     }
 
-    const limit = pagination?.limit ?? 10;
-    const page = pagination?.page ?? 1;
+    // Pagination
+    const limit = Math.max(pagination?.limit ?? 10, 1);
+    const page = Math.max(pagination?.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    console.log({ affiliate, brand });
-
+    // If affiliate is making the request
     if (affiliate) {
       const [affiliateLeads, total] = await this.leadRepository.findAndCount({
         where: {
-          affiliate:{
-            id:affiliate.id
-          },
+          affiliate: { id: affiliate.id },
           ...query,
         },
         take: limit,
@@ -222,18 +246,20 @@ export class LeadsAPIService {
       const paginationMeta = PaginationUtility.getPaginationMetaData(total, limit, page);
 
       return {
-        leads: affiliateLeads,
+        leads: SanitizerProvider.sanitizeObject(
+          affiliateLeads,
+          ["receiver_status", "brand", "lead_status", "affiliate", "rejection_reason"]
+        ),
         pagination: paginationMeta,
       };
     }
 
+    // If brand is making the request
     if (brand) {
       const [brandLeads, total] = await this.leadRepository.findAndCount({
         where: {
           traffic: {
-            brand:{
-              id:brand.id
-            }
+            brand: { id: brand.id },
           },
           ...query,
         },
@@ -245,11 +271,15 @@ export class LeadsAPIService {
       const paginationMeta = PaginationUtility.getPaginationMetaData(total, limit, page);
 
       return {
-        leads: brandLeads,
+        leads: SanitizerProvider.sanitizeObject(
+          brandLeads,
+          ["status", "lead_status", "traffic", "rejection_reason"]
+        ),
         pagination: paginationMeta,
       };
     }
 
+    // No affiliate or brand — return empty result
     const paginationMeta = PaginationUtility.getPaginationMetaData(0, limit, page);
 
     return {
@@ -257,6 +287,7 @@ export class LeadsAPIService {
       pagination: paginationMeta,
     };
   }
+
 
 
   async addLeadData(affiliate: AffiliateEntity, leadData: LeadRequestData) {
@@ -442,7 +473,10 @@ export class LeadsAPIService {
 
     if (!affiliate) throw new BadRequest("Invalid API Key for affiliate");
 
-    const lead = await this.addLeadData(affiliate, leadData);
+    const leadRes = await this.addLeadData(affiliate, leadData);
+
+    const lead = SanitizerProvider.sanitizeObject(leadRes, ["receiver_status", "traffic", "lead_status", "affiliate", "rejection_reason"])
+
 
     return { lead };
   }
@@ -463,58 +497,63 @@ export class LeadsAPIService {
   }
 
   async updateLeadStatus(apiKey: string, leadStatusRequestData: LeadStatusRequestData) {
-
     const { affiliate } = await this.getAffiliateFromAPIKey(apiKey);
 
-    await Promise.all(leadStatusRequestData.lead_update.map((update) => {
-      return async () => {
-
+    const leads = await Promise.all(
+      leadStatusRequestData.lead_update.map(async (update) => {
         const lead = await this.leadRepository.findOne({
           where: {
-            affiliate,
+            affiliate: {
+              id: affiliate?.id
+            },
             id: update.lead_id
           }
-        })
+        });
 
         if (!lead) {
-          throw new BadRequest("Lead does not exist")
+          throw new BadRequest("Lead does not exist");
         }
 
         lead.status = update.status;
         lead.call_status = update.call_status;
         await this.leadRepository.save(lead);
 
-      }
-    }))
+        return SanitizerProvider.sanitizeObject(lead, ["receiver_status", "lead_status", "affiliate", "rejection_reason"])
+      })
+    );
 
+    return leads;
   }
-  async updateLeadFtdStatus(apiKey: string, leadStatusRequestData: LeadFtdStatusRequestData) {
 
+  async updateLeadFtdStatus(apiKey: string, leadStatusRequestData: LeadFtdStatusRequestData) {
     const { affiliate } = await this.getAffiliateFromAPIKey(apiKey);
 
-
-    await Promise.all(leadStatusRequestData.lead_update.map((update) => {
-      return async () => {
-
+    const leads = await Promise.all(
+      leadStatusRequestData.lead_update.map(async (update) => {
         const lead = await this.leadRepository.findOne({
           where: {
-            affiliate,
+            affiliate: {
+              id: affiliate?.id
+            },
             id: update.lead_id
           }
-        })
+        });
 
         if (!lead) {
-          throw new BadRequest("Lead does not exist")
+          throw new BadRequest("Lead does not exist");
         }
 
         lead.is_ftd = true;
         lead.ftd_status = update.ftd_status;
-        lead.ftd_date = update.ftd_date
+        lead.ftd_date = update.ftd_date;
+
         await this.leadRepository.save(lead);
+        return SanitizerProvider.sanitizeObject(lead, ["receiver_status", "lead_status", "affiliate", "rejection_reason"])
+      })
+    );
 
-      }
-    }))
-
+    return leads
   }
+
 
 }

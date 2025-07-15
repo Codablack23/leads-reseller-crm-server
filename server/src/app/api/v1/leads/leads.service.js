@@ -158,9 +158,33 @@ class LeadsAPIService {
             var _a, _b;
             const { affiliate, brand } = yield this.getAffiliateFromAPIKey(apiKey);
             const query = {};
+            // Handle is_ftd boolean
             if (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.is_ftd) {
                 query.is_ftd = true;
             }
+            // Handle comma-separated or single value for call_status
+            if (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.call_status) {
+                if (typeof leadQuery.call_status === 'string' && leadQuery.call_status.includes(',')) {
+                    query.call_status = (0, typeorm_1.In)(leadQuery.call_status.split(',').map(s => s.trim()));
+                }
+                else {
+                    query.call_status = leadQuery.call_status;
+                }
+            }
+            // Handle email filter
+            if (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.email) {
+                query.email = leadQuery.email;
+            }
+            // Handle comma-separated or single value for ftd_status
+            if (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.ftd_status) {
+                if (typeof leadQuery.ftd_status === 'string' && leadQuery.ftd_status.includes(',')) {
+                    query.ftd_status = (0, typeorm_1.In)(leadQuery.ftd_status.split(',').map(s => s.trim()));
+                }
+                else {
+                    query.ftd_status = leadQuery.ftd_status;
+                }
+            }
+            // Handle date range
             const startDate = (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.start_date) ? new Date(leadQuery.start_date) : null;
             const endDate = (leadQuery === null || leadQuery === void 0 ? void 0 : leadQuery.end_date) ? new Date(leadQuery.end_date) : null;
             const isValidStart = startDate && !isNaN(startDate.getTime());
@@ -174,31 +198,29 @@ class LeadsAPIService {
             else if (isValidEnd) {
                 query.createdAt = (0, typeorm_2.LessThanOrEqual)(endDate);
             }
-            const limit = (_a = pagination === null || pagination === void 0 ? void 0 : pagination.limit) !== null && _a !== void 0 ? _a : 10;
-            const page = (_b = pagination === null || pagination === void 0 ? void 0 : pagination.page) !== null && _b !== void 0 ? _b : 1;
+            // Pagination
+            const limit = Math.max((_a = pagination === null || pagination === void 0 ? void 0 : pagination.limit) !== null && _a !== void 0 ? _a : 10, 1);
+            const page = Math.max((_b = pagination === null || pagination === void 0 ? void 0 : pagination.page) !== null && _b !== void 0 ? _b : 1, 1);
             const offset = (page - 1) * limit;
-            console.log({ affiliate, brand });
+            // If affiliate is making the request
             if (affiliate) {
                 const [affiliateLeads, total] = yield this.leadRepository.findAndCount({
-                    where: Object.assign({ affiliate: {
-                            id: affiliate.id
-                        } }, query),
+                    where: Object.assign({ affiliate: { id: affiliate.id } }, query),
                     take: limit,
                     skip: offset,
                     order: { createdAt: 'DESC' },
                 });
                 const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(total, limit, page);
                 return {
-                    leads: affiliateLeads,
+                    leads: utils_1.SanitizerProvider.sanitizeObject(affiliateLeads, ["receiver_status", "brand", "lead_status", "affiliate", "rejection_reason"]),
                     pagination: paginationMeta,
                 };
             }
+            // If brand is making the request
             if (brand) {
                 const [brandLeads, total] = yield this.leadRepository.findAndCount({
                     where: Object.assign({ traffic: {
-                            brand: {
-                                id: brand.id
-                            }
+                            brand: { id: brand.id },
                         } }, query),
                     take: limit,
                     skip: offset,
@@ -206,10 +228,11 @@ class LeadsAPIService {
                 });
                 const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(total, limit, page);
                 return {
-                    leads: brandLeads,
+                    leads: utils_1.SanitizerProvider.sanitizeObject(brandLeads, ["status", "lead_status", "traffic", "rejection_reason"]),
                     pagination: paginationMeta,
                 };
             }
+            // No affiliate or brand — return empty result
             const paginationMeta = utils_1.PaginationUtility.getPaginationMetaData(0, limit, page);
             return {
                 leads: [],
@@ -345,7 +368,8 @@ class LeadsAPIService {
             const { affiliate } = yield this.getAffiliateFromAPIKey(apiKey);
             if (!affiliate)
                 throw new core_error_1.BadRequest("Invalid API Key for affiliate");
-            const lead = yield this.addLeadData(affiliate, leadData);
+            const leadRes = yield this.addLeadData(affiliate, leadData);
+            const lead = utils_1.SanitizerProvider.sanitizeObject(leadRes, ["receiver_status", "traffic", "lead_status", "affiliate", "rejection_reason"]);
             return { lead };
         });
     }
@@ -367,44 +391,48 @@ class LeadsAPIService {
     updateLeadStatus(apiKey, leadStatusRequestData) {
         return __awaiter(this, void 0, void 0, function* () {
             const { affiliate } = yield this.getAffiliateFromAPIKey(apiKey);
-            yield Promise.all(leadStatusRequestData.lead_update.map((update) => {
-                return () => __awaiter(this, void 0, void 0, function* () {
-                    const lead = yield this.leadRepository.findOne({
-                        where: {
-                            affiliate,
-                            id: update.lead_id
-                        }
-                    });
-                    if (!lead) {
-                        throw new core_error_1.BadRequest("Lead does not exist");
+            const leads = yield Promise.all(leadStatusRequestData.lead_update.map((update) => __awaiter(this, void 0, void 0, function* () {
+                const lead = yield this.leadRepository.findOne({
+                    where: {
+                        affiliate: {
+                            id: affiliate === null || affiliate === void 0 ? void 0 : affiliate.id
+                        },
+                        id: update.lead_id
                     }
-                    lead.status = update.status;
-                    lead.call_status = update.call_status;
-                    yield this.leadRepository.save(lead);
                 });
-            }));
+                if (!lead) {
+                    throw new core_error_1.BadRequest("Lead does not exist");
+                }
+                lead.status = update.status;
+                lead.call_status = update.call_status;
+                yield this.leadRepository.save(lead);
+                return utils_1.SanitizerProvider.sanitizeObject(lead, ["receiver_status", "lead_status", "affiliate", "rejection_reason"]);
+            })));
+            return leads;
         });
     }
     updateLeadFtdStatus(apiKey, leadStatusRequestData) {
         return __awaiter(this, void 0, void 0, function* () {
             const { affiliate } = yield this.getAffiliateFromAPIKey(apiKey);
-            yield Promise.all(leadStatusRequestData.lead_update.map((update) => {
-                return () => __awaiter(this, void 0, void 0, function* () {
-                    const lead = yield this.leadRepository.findOne({
-                        where: {
-                            affiliate,
-                            id: update.lead_id
-                        }
-                    });
-                    if (!lead) {
-                        throw new core_error_1.BadRequest("Lead does not exist");
+            const leads = yield Promise.all(leadStatusRequestData.lead_update.map((update) => __awaiter(this, void 0, void 0, function* () {
+                const lead = yield this.leadRepository.findOne({
+                    where: {
+                        affiliate: {
+                            id: affiliate === null || affiliate === void 0 ? void 0 : affiliate.id
+                        },
+                        id: update.lead_id
                     }
-                    lead.is_ftd = true;
-                    lead.ftd_status = update.ftd_status;
-                    lead.ftd_date = update.ftd_date;
-                    yield this.leadRepository.save(lead);
                 });
-            }));
+                if (!lead) {
+                    throw new core_error_1.BadRequest("Lead does not exist");
+                }
+                lead.is_ftd = true;
+                lead.ftd_status = update.ftd_status;
+                lead.ftd_date = update.ftd_date;
+                yield this.leadRepository.save(lead);
+                return utils_1.SanitizerProvider.sanitizeObject(lead, ["receiver_status", "lead_status", "affiliate", "rejection_reason"]);
+            })));
+            return leads;
         });
     }
 }

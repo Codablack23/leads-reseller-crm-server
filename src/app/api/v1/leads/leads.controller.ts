@@ -29,8 +29,8 @@ class LeadsAPIController {
     updateLeadStatus: RequestHandler = async (req, res, next) => {
        const apiKey = req.query.apiKey as string
         try {
-            await this.leadApiService.updateLeadStatus(apiKey, req.body)
-            AppResponse.sendOkResponse(res, {  }, "Lead status updated successfully")
+            const leads = await this.leadApiService.updateLeadStatus(apiKey, req.body)
+            AppResponse.sendOkResponse(res, { leads }, "Lead status updated successfully")
         } catch (error) {
             next(error)
         }

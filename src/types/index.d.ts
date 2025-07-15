@@ -37,6 +37,9 @@ export interface FtdQuery {
 }
 export interface LeadQuery {
     is_ftd?:boolean,
+    email?:string,
+    call_status?:string,
+    ftd_status?:string,
     start_date?:Date,
     end_date?:Date,
 }

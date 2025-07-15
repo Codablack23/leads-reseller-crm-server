@@ -43,8 +43,8 @@ class LeadsAPIController {
         this.updateLeadStatus = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const apiKey = req.query.apiKey;
             try {
-                yield this.leadApiService.updateLeadStatus(apiKey, req.body);
-                service_response_1.default.sendOkResponse(res, {}, "Lead status updated successfully");
+                const leads = yield this.leadApiService.updateLeadStatus(apiKey, req.body);
+                service_response_1.default.sendOkResponse(res, { leads }, "Lead status updated successfully");
             }
             catch (error) {
                 next(error);
